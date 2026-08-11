@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NYC Pest Violation Leads</title>
+<meta name="description" content="NYC buildings with the most rodent and roach HPD violations since 2024, ranked with owner/agent contact info for outreach." />
+
+<style>
+  :root {
+    --page-plane:     #ffffff;
+    --surface-1:      #f7f7f5;
+    --surface-2:      #efefec;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #4a4a46;
+    --text-muted:     #767471;
+    --gridline:       rgba(11,11,11,0.12);
+    --border:         rgba(11,11,11,0.14);
+    --danger:         #b23b3b;
+    --danger-bg:      #fbeaea;
+    --accent:         #199e70;
+    --sans: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    font-family: var(--sans);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+  header { margin-bottom: 24px; }
+  h1 { font-size: clamp(24px, 4vw, 32px); margin: 0 0 6px; letter-spacing: -0.01em; }
+  .sub { color: var(--text-secondary); margin: 0; font-size: 15px; max-width: 68ch; }
+  .meta-line { color: var(--text-muted); font-size: 13px; margin-top: 10px; }
+
+  .controls, .address-search {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    margin: 24px 0;
+    padding: 16px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .address-search {
+    margin: 20px 0 0;
+    background: var(--page-plane);
+    border: 1px solid var(--accent);
+  }
+  .address-search input[type="text"] { width: 100%; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); }
+  .field select, .field input {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text-primary);
+  }
+  .field input[type="number"] { width: 90px; }
+  .spacer { flex: 1 1 auto; }
+  button, .btn {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 9px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+    color: var(--text-primary);
+    text-decoration: none;
+    display: inline-block;
+  }
+  button:hover, .btn:hover { background: var(--surface-2); }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #148057; }
+
+  .state-box {
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+  }
+  .state-box.error { color: var(--danger); background: var(--danger-bg); border-style: solid; border-color: var(--danger); }
+  .state-box h2 { font-size: 17px; margin: 0 0 6px; }
+  .state-box p { margin: 0; font-size: 14px; }
+  .spinner {
+    width: 28px; height: 28px; margin: 0 auto 16px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  caption { caption-side: top; text-align: left; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+  thead th {
+    position: sticky; top: 0;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    background: var(--page-plane);
+    border-bottom: 2px solid var(--gridline);
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 10px 10px;
+    border-bottom: 1px solid var(--gridline);
+    vertical-align: top;
+  }
+  tbody tr:hover { background: var(--surface-1); }
+  .addr { font-weight: 600; }
+  .muted { color: var(--text-muted); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-secondary);
+  }
+  .badge.open { background: var(--danger-bg); color: var(--danger); }
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  .table-scroll table { min-width: 960px; }
+  tbody tr.clickable { cursor: pointer; }
+  footer { margin-top: 40px; font-size: 12px; color: var(--text-muted); }
+  footer a { color: inherit; }
+
+  /* Building detail modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(11,11,11,0.5);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+    overflow-y: auto;
+    z-index: 100;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal {
+    background: var(--page-plane);
+    border-radius: 12px;
+    max-width: 780px;
+    width: 100%;
+    padding: 24px 28px 32px;
+    position: relative;
+  }
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 999px;
+    width: 32px; height: 32px;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .modal-close:hover { background: var(--surface-2); }
+  .modal h2 { font-size: 20px; margin: 0 4px 2px; padding-right: 40px; }
+  .modal .modal-sub { color: var(--text-muted); font-size: 13px; margin: 0 4px 20px; }
+  .detail-section { margin-top: 22px; }
+  .detail-section h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--gridline);
+  }
+  .contact-row, .deed-row, .portfolio-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gridline);
+    font-size: 13.5px;
+  }
+  .contact-row:last-child, .deed-row:last-child, .portfolio-row:last-child { border-bottom: none; }
+  .contact-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; font-size: 12px; }
+  .contact-links a { color: var(--accent); text-decoration: none; }
+  .contact-links a:hover { text-decoration: underline; }
+  .contact-links .website-link { font-weight: 600; }
+  .violation-list { max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+  .violation-row { padding: 8px 12px; border-bottom: 1px solid var(--gridline); font-size: 13px; }
+  .violation-row:last-child { border-bottom: none; }
+  .violation-row .vtop { display: flex; justify-content: space-between; gap: 8px; }
+  .pest-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: 999px; background: var(--surface-2); }
+  .portfolio-row a, .modal a { color: var(--accent); text-decoration: none; }
+  .portfolio-row a:hover, .modal a:hover { text-decoration: underline; }
+  .empty-note { color: var(--text-muted); font-size: 13px; font-style: italic; }
+  .notice {
+    margin: 4px 4px 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    background: var(--surface-2);
+    color: var(--text-secondary);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>NYC Pest Violation Leads</h1>
+    <p class="sub">
+      NYC buildings ranked by rodent and roach HPD violations since 2024-01-01, with the
+      registered owner/agent name and mailing address attached — for postcards or
+      in-person visits. Pulled live from NYC Open Data on every load.
+    </p>
+    <p class="meta-line" id="metaLine"></p>
+  </header>
+
+  <form class="address-search" id="addressSearchForm">
+    <div class="field" style="flex:1 1 auto">
+      <label for="addressInput">Look up a specific address</label>
+      <input type="text" id="addressInput" placeholder="e.g. 530 East 169th Street, Bronx" autocomplete="off" />
+    </div>
+    <button class="btn btn-primary" type="submit">Search</button>
+  </form>
+
+  <div class="controls">
+    <div class="field">
+      <label for="pestType">Pest type</label>
+      <select id="pestType">
+        <option value="all">Rodent + Roach</option>
+        <option value="rodent">Rodent only</option>
+        <option value="roach">Roach only</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="status">Violation status</label>
+      <select id="status">
+        <option value="all">Open + Closed</option>
+        <option value="open">Has open violations</option>
+        <option value="closed">Has closed violations</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="zip">Zip code</label>
+      <input type="text" id="zip" placeholder="e.g. 10456" maxlength="5" inputmode="numeric" pattern="\d{5}" style="width: 100px" />
+    </div>
+    <div class="field">
+      <label for="sortBy">Sort by</label>
+      <select id="sortBy">
+        <option value="total">Total violations</option>
+        <option value="most_recent">Most recent violation</option>
+        <option value="open">Open violations</option>
+        <option value="rodent">Rodent count</option>
+        <option value="roach">Roach count</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="limit"># of leads</label>
+      <input type="number" id="limit" value="100" min="1" max="500" step="1" />
+    </div>
+    <div class="spacer"></div>
+    <button id="refreshBtn" type="button">Refresh</button>
+    <a id="csvLink" class="btn btn-primary" href="#" download>Download CSV</a>
+  </div>
+
+  <div id="results"></div>
+
+  <footer>
+    Sources: NYC Open Data —
+    <a href="https://data.cityofnewyork.us/City-Government/Housing-Maintenance-Code-Violations/wvxf-dwi5" target="_blank" rel="noopener">HPD Housing Maintenance Code Violations</a>,
+    <a href="https://data.cityofnewyork.us/Housing-Development/Multiple-Dwelling-Registrations/tesw-yqqr" target="_blank" rel="noopener">Multiple Dwelling Registrations</a>,
+    <a href="https://data.cityofnewyork.us/Housing-Development/Registration-Contacts/feu5-w2e2" target="_blank" rel="noopener">Registration Contacts</a>.
+    Violation counts refresh roughly every 30 minutes server-side; owner/agent lookups are always live.
+  </footer>
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="modal-close" id="modalClose" type="button" aria-label="Close">&times;</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+  const resultsEl = document.getElementById('results');
+  const metaLineEl = document.getElementById('metaLine');
+  const pestTypeEl = document.getElementById('pestType');
+  const statusEl = document.getElementById('status');
+  const zipEl = document.getElementById('zip');
+  const sortByEl = document.getElementById('sortBy');
+  const limitEl = document.getElementById('limit');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const csvLink = document.getElementById('csvLink');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalBody = document.getElementById('modalBody');
+  const modalClose = document.getElementById('modalClose');
+
+  function currentParams() {
+    const limit = Math.min(500, Math.max(1, parseInt(limitEl.value, 10) || 100));
+    const params = { pestType: pestTypeEl.value, status: statusEl.value, limit, sortBy: sortByEl.value };
+    const zip = zipEl.value.trim();
+    if (/^\d{5}$/.test(zip)) params.zip = zip;
+    return params;
+  }
+
+  function buildUrl(base, params) {
+    const url = new URL(base, window.location.origin);
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    return url.toString();
+  }
+
+  function renderLoading() {
+    resultsEl.innerHTML = `
+      <div class="state-box">
+        <div class="spinner"></div>
+        <h2>Pulling live data from NYC Open Data&hellip;</h2>
+        <p>This can take up to a minute the first time it runs after a cache refresh.</p>
+      </div>`;
+  }
+
+  function renderError(message) {
+    resultsEl.innerHTML = `
+      <div class="state-box error">
+        <h2>Couldn't reach NYC Open Data</h2>
+        <p>${escapeHtml(message)}</p>
+      </div>`;
+  }
+
+  function renderEmpty() {
+    resultsEl.innerHTML = `
+      <div class="state-box">
+        <h2>No matching violations</h2>
+        <p>No buildings matched these filters. Try widening the pest type or status filter.</p>
+      </div>`;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function statusBadge(lead) {
+    if (lead.open_count > 0) {
+      return `<span class="badge open">${lead.open_count} open</span>`;
+    }
+    return `<span class="badge">all closed</span>`;
+  }
+
+  const SORT_LABELS = {
+    total: 'total violation count',
+    most_recent: 'most recent violation date',
+    open: 'open violation count',
+    rodent: 'rodent violation count',
+    roach: 'roach violation count',
+  };
+
+  function renderTable(payload) {
+    const sortLabel = SORT_LABELS[payload.filters.sortBy] || SORT_LABELS.total;
+    const rows = payload.data.map((lead) => `
+      <tr class="clickable" data-buildingid="${escapeHtml(lead.buildingid)}" tabindex="0">
+        <td>
+          <div class="addr">${escapeHtml(lead.address || 'Unknown address')}</div>
+          <div class="muted">Building ID ${escapeHtml(lead.buildingid)}${lead.bin ? ' &middot; BIN ' + escapeHtml(lead.bin) : ''}</div>
+        </td>
+        <td>
+          <div>${escapeHtml(lead.owner_name || 'Not found in HPD registration')}</div>
+          ${lead.owner_type ? `<div class="muted">${escapeHtml(lead.owner_type)}</div>` : ''}
+        </td>
+        <td>${escapeHtml(lead.mailing_address || '—')}</td>
+        <td class="num">${lead.rodent_count}</td>
+        <td class="num">${lead.roach_count}</td>
+        <td class="num"><strong>${lead.total_count}</strong></td>
+        <td>${statusBadge(lead)}</td>
+        <td>${escapeHtml(lead.most_recent_violation_date || '—')}</td>
+      </tr>`).join('');
+
+    resultsEl.innerHTML = `
+      <div class="table-scroll">
+        <table>
+          <caption>${payload.count} of ${payload.total_matched_buildings.toLocaleString()} matching buildings shown, sorted by ${sortLabel} (highest/most recent first). Click a row for building detail.</caption>
+          <thead>
+            <tr>
+              <th>Building</th>
+              <th>Owner / Agent</th>
+              <th>Mailing address</th>
+              <th class="num">Rodent</th>
+              <th class="num">Roach</th>
+              <th class="num">Total</th>
+              <th>Status</th>
+              <th>Most recent</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+
+    resultsEl.querySelectorAll('tbody tr[data-buildingid]').forEach((tr) => {
+      const open = () => openBuildingDetail(tr.dataset.buildingid);
+      tr.addEventListener('click', open);
+      tr.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      });
+    });
+  }
+
+  // --- Building detail modal ---------------------------------------------
+
+  function openModal() { modalOverlay.classList.remove('hidden'); }
+  function closeModal() { modalOverlay.classList.add('hidden'); modalBody.innerHTML = ''; }
+
+  modalClose.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modalOverlay.classList.contains('hidden')) closeModal();
+  });
+
+  function pestTag(type) {
+    return `<span class="pest-tag">${escapeHtml(type)}</span>`;
+  }
+
+  function websiteHostname(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ''); }
+    catch { return url; }
+  }
+
+  function renderContacts(contacts) {
+    if (!contacts.length) return '<p class="empty-note">No contacts on file for this registration.</p>';
+    return contacts.map((c) => {
+      const links = [];
+      if (c.website) {
+        links.push(`<a class="website-link" href="${escapeHtml(c.website)}" target="_blank" rel="noopener">${escapeHtml(websiteHostname(c.website))} &nearr;</a>`);
+      }
+      if (c.google_search_url) {
+        links.push(`<a href="${escapeHtml(c.google_search_url)}" target="_blank" rel="noopener">Search Google &nearr;</a>`);
+      }
+      if (c.linkedin_search_url) {
+        links.push(`<a href="${escapeHtml(c.linkedin_search_url)}" target="_blank" rel="noopener">Search LinkedIn &nearr;</a>`);
+      }
+      return `
+      <div class="contact-row">
+        <div>
+          <div><strong>${escapeHtml(c.name || 'Unnamed')}</strong></div>
+          <div class="muted">${escapeHtml(c.type || '')}</div>
+          ${links.length ? `<div class="contact-links">${links.join('')}</div>` : ''}
+        </div>
+        <div style="text-align:right">${escapeHtml(c.mailing_address || '—')}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderViolations(violations) {
+    if (!violations.length) return '<p class="empty-note">No pest violations found since 2024-01-01.</p>';
+    const rows = violations.map((v) => `
+      <div class="violation-row">
+        <div class="vtop">
+          <span>${escapeHtml(v.date || '—')} &middot; Apt ${escapeHtml(v.apartment || '—')} ${pestTag(v.pest_type)}</span>
+          <span class="muted">${escapeHtml(v.status)}</span>
+        </div>
+        <div class="muted">${escapeHtml(v.current_status || '')}</div>
+      </div>`).join('');
+    return `<div class="violation-list">${rows}</div>`;
+  }
+
+  function renderDob(dobViolations) {
+    if (!dobViolations.length) return '<p class="empty-note">No DOB violations on file for this BIN.</p>';
+    const rows = dobViolations.map((d) => `
+      <div class="violation-row">
+        <div class="vtop">
+          <span>${escapeHtml(d.issue_date || '—')}</span>
+          <span class="muted">${escapeHtml(d.category || '')}</span>
+        </div>
+        <div class="muted">${escapeHtml((d.description || '').slice(0, 160))}</div>
+      </div>`).join('');
+    return `<div class="violation-list">${rows}</div>`;
+  }
+
+  function renderDeeds(deeds) {
+    if (!deeds.length) return '<p class="empty-note">No deed transfers found in ACRIS for this lot.</p>';
+    return deeds.map((d) => `
+      <div class="deed-row">
+        <div>
+          <div><strong>${escapeHtml(d.from.join(', ') || 'Unknown')}</strong> &rarr; <strong>${escapeHtml(d.to.join(', ') || 'Unknown')}</strong></div>
+          <div class="muted">${escapeHtml(d.doc_type)} &middot; ${escapeHtml(d.date || '—')}</div>
+        </div>
+        <div>${d.amount ? '$' + d.amount.toLocaleString() : '—'}</div>
+      </div>`).join('');
+  }
+
+  function renderPortfolio(portfolio) {
+    if (!portfolio.length) return '<p class="empty-note">No other buildings found under this exact owner/agent name.</p>';
+    return portfolio.map((p) => `
+      <div class="portfolio-row">
+        <a href="#" data-buildingid="${escapeHtml(p.buildingid)}">${escapeHtml(p.address || 'Unknown address')}</a>
+        <span>${p.total_count} total (${p.open_count} open)</span>
+      </div>`).join('');
+  }
+
+  function renderBuildingDetail(detail, bannerHtml) {
+    modalBody.innerHTML = `
+      <h2>${escapeHtml(detail.address || 'Unknown address')}</h2>
+      <p class="modal-sub">
+        Building ID ${escapeHtml(detail.buildingid)}
+        ${detail.bin ? ' &middot; BIN ' + escapeHtml(detail.bin) : ''}
+        ${detail.block ? ' &middot; Block ' + escapeHtml(detail.block) + ' Lot ' + escapeHtml(detail.lot) : ''}
+      </p>
+      ${bannerHtml || ''}
+
+      <div class="detail-section">
+        <h3>Registration contacts (${detail.contacts.length})</h3>
+        ${renderContacts(detail.contacts)}
+      </div>
+
+      <div class="detail-section">
+        <h3>Pest violations since 2024-01-01 (${detail.violations.length})</h3>
+        ${renderViolations(detail.violations)}
+      </div>
+
+      <div class="detail-section">
+        <h3>Other buildings, same owner/agent (${detail.portfolio.length})</h3>
+        ${renderPortfolio(detail.portfolio)}
+      </div>
+
+      <div class="detail-section">
+        <h3>ACRIS deed history (property records)</h3>
+        ${renderDeeds(detail.deed_history)}
+      </div>
+
+      <div class="detail-section">
+        <h3>DOB violations (${detail.dob_violations.length})</h3>
+        ${renderDob(detail.dob_violations)}
+      </div>
+    `;
+
+    modalBody.querySelectorAll('a[data-buildingid]').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        openBuildingDetail(a.dataset.buildingid);
+      });
+    });
+  }
+
+  async function openBuildingDetail(buildingid) {
+    openModal();
+    modalBody.innerHTML = `
+      <div class="state-box">
+        <div class="spinner"></div>
+        <h2>Loading building detail&hellip;</h2>
+        <p>Pulling HPD, DOB, and ACRIS records live.</p>
+      </div>`;
+    try {
+      const response = await fetch(`/api/buildings/${encodeURIComponent(buildingid)}`);
+      const detail = await response.json();
+      if (!response.ok) throw new Error(detail.error || `Request failed (${response.status})`);
+      renderBuildingDetail(detail);
+    } catch (err) {
+      modalBody.innerHTML = `
+        <div class="state-box error">
+          <h2>Couldn't load building detail</h2>
+          <p>${escapeHtml(err.message || 'Unknown error')}</p>
+        </div>`;
+    }
+  }
+
+  const addressSearchForm = document.getElementById('addressSearchForm');
+  const addressInput = document.getElementById('addressInput');
+
+  async function openAddressSearch(address) {
+    openModal();
+    modalBody.innerHTML = `
+      <div class="state-box">
+        <div class="spinner"></div>
+        <h2>Looking up &ldquo;${escapeHtml(address)}&rdquo;&hellip;</h2>
+        <p>Geocoding the address, then pulling HPD, DOB, and ACRIS records live.</p>
+      </div>`;
+    try {
+      const response = await fetch(`/api/address-lookup?address=${encodeURIComponent(address)}`);
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+      if (result.status === 'found' || result.status === 'no_violations') {
+        const banner = result.status === 'no_violations'
+          ? `<div class="notice">${escapeHtml(result.message)}</div>`
+          : '';
+        renderBuildingDetail(result.detail, banner);
+        return;
+      }
+
+      // not_found / no_building / no_registration — no building detail to show.
+      const heading = result.status === 'not_found' ? "Address not found" : "Found the address, but&hellip;";
+      modalBody.innerHTML = `
+        <div class="state-box">
+          <h2>${heading}</h2>
+          <p>${escapeHtml(result.message)}</p>
+          ${result.resolved_address ? `<p class="muted">NYC resolved this to: ${escapeHtml(result.resolved_address)}</p>` : ''}
+        </div>`;
+    } catch (err) {
+      modalBody.innerHTML = `
+        <div class="state-box error">
+          <h2>Couldn't look up that address</h2>
+          <p>${escapeHtml(err.message || 'Unknown error')}</p>
+        </div>`;
+    }
+  }
+
+  addressSearchForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const address = addressInput.value.trim();
+    if (!address) return;
+    openAddressSearch(address);
+  });
+
+  async function load() {
+    const params = currentParams();
+    csvLink.href = buildUrl('/api/pest-leads.csv', params);
+    renderLoading();
+    try {
+      const response = await fetch(buildUrl('/api/pest-leads', params));
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
+
+      metaLineEl.textContent = payload.pest_counts_last_refreshed
+        ? `Violation counts as of ${new Date(payload.pest_counts_last_refreshed).toLocaleString()} · fetched ${new Date(payload.fetched_at).toLocaleTimeString()}`
+        : '';
+
+      if (!payload.data || payload.data.length === 0) {
+        renderEmpty();
+        return;
+      }
+      renderTable(payload);
+    } catch (err) {
+      renderError(err.message || 'Unknown error');
+    }
+  }
+
+  refreshBtn.addEventListener('click', load);
+  pestTypeEl.addEventListener('change', load);
+  statusEl.addEventListener('change', load);
+  limitEl.addEventListener('change', load);
+  zipEl.addEventListener('change', load);
+  zipEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') load(); });
+  sortByEl.addEventListener('change', load);
+
+  load();
+</script>
+</body>
+</html>
