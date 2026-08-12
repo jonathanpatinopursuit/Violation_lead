@@ -494,8 +494,14 @@ async function getPestLeads({ limit = 100, pestType = 'all', status = 'all', zip
   // sorting/limiting — otherwise "top N citywide" could exclude buildings
   // that would have ranked highly within just this zip.
   let zipRegByBuilding = null;
+  // Distinguishes "real zip, just no matching violations" from "not a real
+  // zip" — if HPD has zero registered buildings at all for this zip (not
+  // just zero pest-violation matches), that's a strong signal it's invalid,
+  // not just an unlucky filter combination.
+  let zipExists = null;
   if (zip) {
     zipRegByBuilding = dedupeLatestRegistration(await fetchRegistrationsByZip(zip));
+    zipExists = zipRegByBuilding.size > 0;
     leads = leads.filter((l) => zipRegByBuilding.has(l.buildingid));
   }
 
@@ -514,12 +520,19 @@ async function getPestLeads({ limit = 100, pestType = 'all', status = 'all', zip
     leads = leads.filter((l) => l.most_recent_violation_date && l.most_recent_violation_date >= cutoff);
   }
 
+  // Aggregate stats computed over the *full* filtered set, before slicing to
+  // limit — these power the summary stat cards, which describe all matching
+  // buildings, not just the page of leads actually returned.
   const totalMatchedBuildings = leads.length;
+  const totalOpenCount = leads.reduce((sum, l) => sum + l.open_count, 0);
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const activeLast7Days = leads.filter((l) => l.most_recent_violation_date && l.most_recent_violation_date >= sevenDaysAgo).length;
+
   leads.sort(LEAD_SORTERS[sortBy] || LEAD_SORTERS.total);
   leads = leads.slice(0, limit);
 
   if (leads.length === 0) {
-    return { leads: [], totalMatchedBuildings, pestDataAsOf };
+    return { leads: [], totalMatchedBuildings, totalOpenCount, activeLast7Days, pestDataAsOf, zipExists };
   }
 
   const buildingIds = leads.map((l) => l.buildingid);
@@ -563,7 +576,7 @@ async function getPestLeads({ limit = 100, pestType = 'all', status = 'all', zip
     lead.mailing_address = formatMailingAddress(bestContact);
   }
 
-  return { leads, totalMatchedBuildings, pestDataAsOf };
+  return { leads, totalMatchedBuildings, totalOpenCount, activeLast7Days, pestDataAsOf, zipExists };
 }
 
 // ---------------------------------------------------------------------------
@@ -892,6 +905,23 @@ async function geocodeAddress(addressText) {
 }
 
 async function lookupAddress(addressText) {
+  // GeoSearch doesn't reliably flag low-confidence guesses — a vague query
+  // like "Grand Concourse" (no house number) gets the *same* confidence
+  // score as a precise one, just silently fuzzy-matched to some unrelated
+  // building on that street. Since a house number is present on every real
+  // address, requiring one here catches the ambiguous case before it ever
+  // reaches the geocoder, instead of confidently returning the wrong building.
+  if (!/^\d/.test(addressText.trim())) {
+    return {
+      status: 'too_vague',
+      message:
+        'That doesn’t look like a specific street address. Include the house number (e.g. "530 East 169th Street") and, if you have it, the zip code — otherwise the match can land on the wrong building.',
+      query: addressText,
+      resolved_address: null,
+      detail: null,
+    };
+  }
+
   const geocoded = await geocodeAddress(addressText);
   if (!geocoded) {
     return {
@@ -1003,7 +1033,14 @@ const app = express();
 app.get('/api/pest-leads', async (req, res) => {
   try {
     const { limit, pestType, status, zip, sortBy, recentDays } = parseLeadsQuery(req.query);
-    const { leads, totalMatchedBuildings, pestDataAsOf } = await getPestLeads({ limit, pestType, status, zip, sortBy, recentDays });
+    const { leads, totalMatchedBuildings, totalOpenCount, activeLast7Days, pestDataAsOf, zipExists } = await getPestLeads({
+      limit,
+      pestType,
+      status,
+      zip,
+      sortBy,
+      recentDays,
+    });
     res.json({
       source:
         'NYC Open Data — HPD Housing Maintenance Code Violations (wvxf-dwi5), Multiple Dwelling Registrations (tesw-yqqr), Registration Contacts (feu5-w2e2)',
@@ -1012,6 +1049,9 @@ app.get('/api/pest-leads', async (req, res) => {
       pest_counts_last_refreshed: pestDataAsOf ? new Date(pestDataAsOf).toISOString() : null,
       filters: { pestType, status, limit, zip, sortBy, recentDays },
       total_matched_buildings: totalMatchedBuildings,
+      total_open_count: totalOpenCount,
+      active_last_7_days: activeLast7Days,
+      zip_exists: zipExists,
       count: leads.length,
       data: leads,
     });

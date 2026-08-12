@@ -3,331 +3,277 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>NYC Pest Violation Leads</title>
+<title>Violation Lead — NYC Pest Violation Leads</title>
 <meta name="description" content="NYC buildings with the most rodent and roach HPD violations since 2024, ranked with owner/agent contact info for outreach." />
 
+<link rel="stylesheet" href="_ds/industry-8449be2a-f099-4412-aa7d-726fff38042d/styles.css" />
+<script src="_ds/industry-8449be2a-f099-4412-aa7d-726fff38042d/_ds_bundle.js"></script>
 <style>
-  :root {
-    --page-plane:     #ffffff;
-    --surface-1:      #f7f7f5;
-    --surface-2:      #efefec;
-    --text-primary:   #0b0b0b;
-    --text-secondary: #4a4a46;
-    --text-muted:     #767471;
-    --gridline:       rgba(11,11,11,0.12);
-    --border:         rgba(11,11,11,0.14);
-    --danger:         #b23b3b;
-    --danger-bg:      #fbeaea;
-    --accent:         #199e70;
-    --sans: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-  }
+  body { margin: 0; background: var(--color-bg); font-family: var(--font-body); }
   * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--page-plane);
-    color: var(--text-primary);
-    font-family: var(--sans);
-    line-height: 1.5;
-  }
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
-  header { margin-bottom: 24px; }
-  h1 { font-size: clamp(24px, 4vw, 32px); margin: 0 0 6px; letter-spacing: -0.01em; }
-  .sub { color: var(--text-secondary); margin: 0; font-size: 15px; max-width: 68ch; }
-  .meta-line { color: var(--text-muted); font-size: 13px; margin-top: 10px; }
+  a { cursor: pointer; }
 
-  .controls, .address-search {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: flex-end;
-    margin: 24px 0;
-    padding: 16px;
-    background: var(--surface-1);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-  }
-  .address-search {
-    margin: 20px 0 0;
-    background: var(--page-plane);
-    border: 1px solid var(--accent);
-  }
-  .address-search input[type="text"] { width: 100%; }
-  .field { display: flex; flex-direction: column; gap: 4px; }
-  .field label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); }
-  .field select, .field input {
-    font-family: inherit;
-    font-size: 14px;
-    padding: 7px 10px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: #fff;
-    color: var(--text-primary);
-  }
-  .field input[type="number"] { width: 90px; }
-  .spacer { flex: 1 1 auto; }
-  button, .btn {
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 9px 16px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: #fff;
-    cursor: pointer;
-    color: var(--text-primary);
-    text-decoration: none;
-    display: inline-block;
-  }
-  button:hover, .btn:hover { background: var(--surface-2); }
-  .btn-primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-  .btn-primary:hover { background: #148057; }
+  .nav { border-bottom: 1px solid var(--color-divider); }
+  .nav .spacer { flex: 1 1 auto; }
+  .nav a[aria-current='page'] { color: var(--color-text); font-weight: 600; }
 
-  .state-box {
-    padding: 48px 20px;
-    text-align: center;
-    color: var(--text-secondary);
-    border: 1px dashed var(--border);
-    border-radius: 10px;
-  }
-  .state-box.error { color: var(--danger); background: var(--danger-bg); border-style: solid; border-color: var(--danger); }
-  .state-box h2 { font-size: 17px; margin: 0 0 6px; }
-  .state-box p { margin: 0; font-size: 14px; }
-  .spinner {
-    width: 28px; height: 28px; margin: 0 auto 16px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .page { max-width: 1400px; margin: 0 auto; padding: 26px 28px 60px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: 0.01em; }
+  .lede { margin: 0 0 20px; font-size: 13px; color: var(--color-neutral-700); max-width: 72ch; }
 
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  caption { caption-side: top; text-align: left; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
-  thead th {
-    position: sticky; top: 0;
-    text-align: left;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--text-muted);
-    background: var(--page-plane);
-    border-bottom: 2px solid var(--gridline);
-    padding: 8px 10px;
-    white-space: nowrap;
-  }
-  tbody td {
-    padding: 10px 10px;
-    border-bottom: 1px solid var(--gridline);
-    vertical-align: top;
-  }
-  tbody tr:hover { background: var(--surface-1); }
-  .addr { font-weight: 600; }
-  .muted { color: var(--text-muted); }
-  .num { text-align: right; font-variant-numeric: tabular-nums; }
-  .badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 999px;
-    background: var(--surface-2);
-    color: var(--text-secondary);
-  }
-  .badge.open { background: var(--danger-bg); color: var(--danger); }
-  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
-  .table-scroll table { min-width: 960px; }
-  tbody tr.clickable { cursor: pointer; }
-  footer { margin-top: 40px; font-size: 12px; color: var(--text-muted); }
-  footer a { color: inherit; }
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin-bottom: 22px; }
+  .stat-row .card { padding: 14px 16px; }
+  .stat-row .card-title { font-size: 22px; }
 
-  /* Building detail modal */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(11,11,11,0.5);
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 40px 16px;
-    overflow-y: auto;
-    z-index: 100;
-  }
-  .modal-overlay.hidden { display: none; }
-  .modal {
-    background: var(--page-plane);
-    border-radius: 12px;
-    max-width: 780px;
-    width: 100%;
-    padding: 24px 28px 32px;
-    position: relative;
-  }
-  .modal-close {
-    position: absolute;
-    top: 16px; right: 16px;
-    border: 1px solid var(--border);
-    background: #fff;
-    border-radius: 999px;
-    width: 32px; height: 32px;
-    font-size: 16px;
-    line-height: 1;
-    cursor: pointer;
-  }
-  .modal-close:hover { background: var(--surface-2); }
-  .modal h2 { font-size: 20px; margin: 0 4px 2px; padding-right: 40px; }
-  .modal .modal-sub { color: var(--text-muted); font-size: 13px; margin: 0 4px 20px; }
-  .detail-section { margin-top: 22px; }
-  .detail-section h3 {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted);
-    margin: 0 0 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--gridline);
-  }
+  .filter-bar { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end; padding: 14px 16px; border: 1px solid var(--color-neutral-300); margin-bottom: 20px; }
+  .filter-bar .field { min-width: 130px; }
+  .filter-bar .field.grow { flex: 1 1 auto; min-width: 260px; }
+  .filter-bar .spacer { flex: 1 1 auto; }
+
+  .icon { display: inline-block; vertical-align: -2px; }
+  .section-label { font-family: var(--font-heading); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-neutral-700); margin: 0 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--color-neutral-300); }
+  .tag-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
   .contact-row, .deed-row, .portfolio-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--gridline);
-    font-size: 13.5px;
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid var(--color-neutral-300); font-size: 13.5px;
   }
   .contact-row:last-child, .deed-row:last-child, .portfolio-row:last-child { border-bottom: none; }
   .contact-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; font-size: 12px; }
-  .contact-links a { color: var(--accent); text-decoration: none; }
+  .contact-links a { color: var(--color-accent-700); text-decoration: none; }
   .contact-links a:hover { text-decoration: underline; }
   .contact-links .website-link { font-weight: 600; }
-  .violation-list { max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
-  .violation-row { padding: 8px 12px; border-bottom: 1px solid var(--gridline); font-size: 13px; }
+  .portfolio-row a { color: var(--color-accent-700); text-decoration: none; }
+  .portfolio-row a:hover { text-decoration: underline; }
+
+  .violation-list { max-height: 320px; overflow-y: auto; border: 1px solid var(--color-neutral-300); }
+  .violation-row { padding: 8px 12px; border-bottom: 1px solid var(--color-neutral-200); font-size: 13px; }
   .violation-row:last-child { border-bottom: none; }
   .violation-row .vtop { display: flex; justify-content: space-between; gap: 8px; }
-  .pest-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: 999px; background: var(--surface-2); }
-  .portfolio-row a, .modal a { color: var(--accent); text-decoration: none; }
-  .portfolio-row a:hover, .modal a:hover { text-decoration: underline; }
-  .empty-note { color: var(--text-muted); font-size: 13px; font-style: italic; }
-  .notice {
-    margin: 4px 4px 0;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 13.5px;
-    background: var(--surface-2);
-    color: var(--text-secondary);
+  .muted, .text-muted { color: var(--color-neutral-700); }
+  .empty-note { color: var(--color-neutral-600); font-size: 13px; font-style: italic; }
+
+  .layout { display: flex; gap: 22px; align-items: flex-start; }
+  .list-col { width: 420px; flex: none; }
+  .detail-col { flex: 1; min-width: 0; }
+
+  .list-frame { border: 1px solid var(--color-neutral-300); max-height: 720px; overflow-y: auto; }
+  .lead-row { padding: 12px 14px; border-bottom: 1px solid var(--color-neutral-200); cursor: pointer; }
+  .lead-row:last-child { border-bottom: none; }
+  .lead-row:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+  .lead-row.selected { background: var(--color-accent-100); }
+  .lead-addr { font-weight: 600; font-size: 13px; }
+  .lead-owner { font-size: 12px; color: var(--color-neutral-700); margin-top: 2px; }
+  .lead-counts { display: flex; gap: 6px; margin-top: 8px; }
+  .lead-id { font-size: 11px; color: var(--color-neutral-600); margin-top: 2px; }
+
+  .detail-section { margin-top: 22px; }
+  .detail-section:first-of-type { margin-top: 0; }
+
+  /* Only ever rendered for the print dialog (see @media print below) — never
+     shown inline on the page itself. */
+  .print-preview-wrap { display: none; }
+  .print-preview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .postcard {
+    padding: 20px; background: var(--color-surface); border: 1px solid var(--color-neutral-300);
+    display: flex; flex-direction: column; justify-content: space-between;
+    font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; min-height: 140px;
+  }
+
+  .state-box {
+    padding: 48px 20px; text-align: center; color: var(--color-neutral-700);
+    border: 1px solid var(--color-neutral-300);
+  }
+  .state-box.error { color: #a33; background: color-mix(in srgb, #a33 8%, transparent); border-color: #a33; }
+  .state-box h3 { font-size: 16px; margin: 0 0 6px; }
+  .state-box p { margin: 0; font-size: 13px; }
+  .spinner {
+    width: 26px; height: 26px; margin: 0 auto 16px;
+    border: 3px solid var(--color-neutral-300); border-top-color: var(--color-accent);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  footer { margin-top: 40px; font-size: 12px; color: var(--color-neutral-700); }
+  footer a { color: inherit; }
+
+  @media print {
+    .nav, .lede, .stat-row, .filter-bar, .layout, footer, .meta-line { display: none !important; }
+    .print-preview-wrap { display: block !important; margin: 0; }
+    .print-preview { grid-template-columns: repeat(2, 1fr); }
+    body { background: #fff; }
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>NYC Pest Violation Leads</h1>
-    <p class="sub">
-      NYC buildings ranked by rodent and roach HPD violations since 2024-01-01, with the
-      registered owner/agent name and mailing address attached — for postcards or
-      in-person visits. Pulled live from NYC Open Data on every load.
-    </p>
-    <p class="meta-line" id="metaLine"></p>
-  </header>
 
-  <form class="address-search" id="addressSearchForm">
-    <div class="field" style="flex:1 1 auto">
-      <label for="addressInput">Look up a specific address</label>
-      <input type="text" id="addressInput" placeholder="e.g. 530 East 169th Street, Bronx" autocomplete="off" />
+<nav class="nav">
+  <span class="nav-brand">Violation Lead</span>
+  <a href="#" aria-current="page">Leads</a>
+  <a href="#" id="portfolioNavLink" title="Coming soon">Portfolio</a>
+  <div class="spacer"></div>
+  <a id="csvLink" class="btn btn-secondary blueprint" href="#"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M17 8l-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
+    Export CSV
+  </a>
+  <button type="button" id="printBtn" class="btn btn-secondary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Print labels
+  </button>
+</nav>
+
+<div class="page">
+  <h1>Pest violation leads</h1>
+  <p class="lede">NYC buildings ranked by rodent + roach HPD violations since 2024-01-01, with owner/agent contact attached for outreach. Pulled live from NYC Open Data.</p>
+  <p class="lede meta-line" id="metaLine"></p>
+
+  <div class="stat-row" id="statRow">
+    <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Matching buildings</div><div class="card-title" id="statMatched">—</div></div>
+    <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Open violations</div><div class="card-title" id="statOpen">—</div></div>
+    <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Active last 7 days</div><div class="card-title" id="statActive7">—</div></div>
+    <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Counts refreshed</div><div class="card-title" id="statRefreshed" style="font-size: 15px;">—</div></div>
+  </div>
+
+  <form class="filter-bar" id="filterForm">
+    <div class="field grow">
+      <label for="searchInput">Search address or zipcode</label>
+      <input class="input" type="text" id="searchInput" placeholder="e.g. 530 East 169th Street or 10456" autocomplete="off" />
+      <div id="searchError" style="display:none; color:#a33; font-size:12px; margin-top:4px;"></div>
     </div>
-    <button class="btn btn-primary" type="submit">Search</button>
-  </form>
-
-  <div class="controls">
     <div class="field">
       <label for="pestType">Pest type</label>
-      <select id="pestType">
+      <select class="input" id="pestType">
         <option value="all">Rodent + Roach</option>
         <option value="rodent">Rodent only</option>
         <option value="roach">Roach only</option>
       </select>
     </div>
     <div class="field">
-      <label for="status">Violation status</label>
-      <select id="status">
+      <label for="status">Status</label>
+      <select class="input" id="status">
         <option value="all">Open + Closed</option>
-        <option value="open">Has open violations</option>
-        <option value="closed">Has closed violations</option>
+        <option value="open">Has open</option>
+        <option value="closed">Has closed</option>
       </select>
     </div>
     <div class="field">
-      <label for="zip">Zip code</label>
-      <input type="text" id="zip" placeholder="e.g. 10456" maxlength="5" inputmode="numeric" pattern="\d{5}" style="width: 100px" />
-    </div>
-    <div class="field">
       <label for="sortBy">Sort by</label>
-      <select id="sortBy">
+      <select class="input" id="sortBy">
         <option value="total">Total violations</option>
-        <option value="most_recent">Most recent violation</option>
-        <option value="open">Open violations</option>
+        <option value="most_recent">Most recent</option>
+        <option value="open">Open count</option>
         <option value="rodent">Rodent count</option>
         <option value="roach">Roach count</option>
       </select>
     </div>
     <div class="field">
-      <label for="recentDays">Recently active</label>
-      <select id="recentDays">
+      <label for="recentDays">Active within</label>
+      <select class="input" id="recentDays">
         <option value="">Any time</option>
-        <option value="7">Last 7 days</option>
-        <option value="14">Last 14 days</option>
-        <option value="30">Last 30 days</option>
-        <option value="90">Last 90 days</option>
+        <option value="7">7 days</option>
+        <option value="14">14 days</option>
+        <option value="30">30 days</option>
+        <option value="90">90 days</option>
       </select>
     </div>
     <div class="field">
-      <label for="limit"># of leads</label>
-      <input type="number" id="limit" value="100" min="1" max="500" step="1" />
+      <label for="limit"># leads</label>
+      <input class="input" type="number" id="limit" value="100" min="1" max="500" step="1" style="width: 90px" />
     </div>
-    <div class="spacer"></div>
-    <button id="refreshBtn" type="button">Refresh</button>
-    <a id="csvLink" class="btn btn-primary" href="#" download>Download CSV</a>
+    <button type="submit" class="btn btn-primary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Apply</button>
+  </form>
+
+  <div class="print-preview-wrap" id="printPreviewWrap">
+    <div class="section-label">Print preview — 4-up postcard label layout</div>
+    <div class="print-preview" id="printPreview"></div>
   </div>
 
-  <div id="results"></div>
+  <div class="layout" id="layout">
+    <div class="list-col">
+      <div class="section-label" id="listLabel">Loading&hellip;</div>
+      <div class="list-frame" id="listFrame"></div>
+    </div>
+    <div class="detail-col" id="detailCol">
+      <div class="state-box">
+        <div class="spinner"></div>
+        <h3>Loading leads&hellip;</h3>
+        <p>Pulling live data from NYC Open Data.</p>
+      </div>
+    </div>
+  </div>
 
   <footer>
     Sources: NYC Open Data —
     <a href="https://data.cityofnewyork.us/City-Government/Housing-Maintenance-Code-Violations/wvxf-dwi5" target="_blank" rel="noopener">HPD Housing Maintenance Code Violations</a>,
     <a href="https://data.cityofnewyork.us/Housing-Development/Multiple-Dwelling-Registrations/tesw-yqqr" target="_blank" rel="noopener">Multiple Dwelling Registrations</a>,
-    <a href="https://data.cityofnewyork.us/Housing-Development/Registration-Contacts/feu5-w2e2" target="_blank" rel="noopener">Registration Contacts</a>.
+    <a href="https://data.cityofnewyork.us/Housing-Development/Registration-Contacts/feu5-w2e2" target="_blank" rel="noopener">Registration Contacts</a>,
+    NYC Planning GeoSearch, DOB Violations, ACRIS.
     Violation counts refresh roughly every 30 minutes server-side; owner/agent lookups are always live.
   </footer>
 </div>
 
-<div class="modal-overlay hidden" id="modalOverlay">
-  <div class="modal" role="dialog" aria-modal="true">
-    <button class="modal-close" id="modalClose" type="button" aria-label="Close">&times;</button>
-    <div id="modalBody"></div>
-  </div>
-</div>
-
 <script>
-  const resultsEl = document.getElementById('results');
   const metaLineEl = document.getElementById('metaLine');
   const pestTypeEl = document.getElementById('pestType');
   const statusEl = document.getElementById('status');
-  const zipEl = document.getElementById('zip');
+  const searchEl = document.getElementById('searchInput');
   const sortByEl = document.getElementById('sortBy');
   const recentDaysEl = document.getElementById('recentDays');
   const limitEl = document.getElementById('limit');
-  const refreshBtn = document.getElementById('refreshBtn');
   const csvLink = document.getElementById('csvLink');
-  const modalOverlay = document.getElementById('modalOverlay');
-  const modalBody = document.getElementById('modalBody');
-  const modalClose = document.getElementById('modalClose');
+  const filterForm = document.getElementById('filterForm');
+  const listLabelEl = document.getElementById('listLabel');
+  const listFrameEl = document.getElementById('listFrame');
+  const detailColEl = document.getElementById('detailCol');
+  const printBtn = document.getElementById('printBtn');
+  const printPreviewWrap = document.getElementById('printPreviewWrap');
+  const printPreviewEl = document.getElementById('printPreview');
+  const portfolioNavLink = document.getElementById('portfolioNavLink');
+  const searchErrorEl = document.getElementById('searchError');
+
+  let currentLeads = [];
+  let selectedBuildingId = null;
+
+  portfolioNavLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    alert('Portfolio view is not built yet — for now, click any lead and see "Other buildings, same owner/agent" in its detail panel.');
+  });
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function showSearchError(message) {
+    searchErrorEl.textContent = message;
+    searchErrorEl.style.display = 'block';
+  }
+  function clearSearchError() {
+    searchErrorEl.style.display = 'none';
+  }
+
+  // Anything that's all digits (ignoring spaces/dashes, so "10456-1234"
+  // still counts) was clearly *meant* as a zip code, even if it's the wrong
+  // length — that must produce a validation error, not silently fall through
+  // to an unfiltered list (which looked like "a different zip") or get sent
+  // to the address geocoder (which could fuzzy-match something unrelated).
+  // Anything with a letter in it is a street address instead.
+  function classifySearch(raw) {
+    if (!raw) return { type: 'none' };
+    const digitsOnly = raw.replace(/[\s-]/g, '');
+    if (/^\d+$/.test(digitsOnly)) {
+      return /^\d{5}$/.test(digitsOnly) ? { type: 'zip', value: digitsOnly } : { type: 'invalid_zip' };
+    }
+    return { type: 'address', value: raw };
+  }
 
   function currentParams() {
     const limit = Math.min(500, Math.max(1, parseInt(limitEl.value, 10) || 100));
     const params = { pestType: pestTypeEl.value, status: statusEl.value, limit, sortBy: sortByEl.value };
-    const zip = zipEl.value.trim();
-    if (/^\d{5}$/.test(zip)) params.zip = zip;
     if (recentDaysEl.value) params.recentDays = recentDaysEl.value;
+    const parsed = classifySearch(searchEl.value.trim());
+    if (parsed.type === 'zip') params.zip = parsed.value;
     return params;
   }
 
@@ -337,115 +283,115 @@
     return url.toString();
   }
 
-  function renderLoading() {
-    resultsEl.innerHTML = `
-      <div class="state-box">
-        <div class="spinner"></div>
-        <h2>Pulling live data from NYC Open Data&hellip;</h2>
-        <p>This can take up to a minute the first time it runs after a cache refresh.</p>
-      </div>`;
+  function timeAgo(iso) {
+    if (!iso) return '—';
+    const ms = Date.now() - new Date(iso).getTime();
+    const min = Math.round(ms / 60000);
+    if (min < 1) return 'just now';
+    if (min < 60) return `${min} min ago`;
+    const hr = Math.round(min / 60);
+    if (hr < 24) return `${hr} hr ago`;
+    return `${Math.round(hr / 24)} day${hr >= 48 ? 's' : ''} ago`;
   }
 
-  function renderError(message) {
-    resultsEl.innerHTML = `
-      <div class="state-box error">
-        <h2>Couldn't reach NYC Open Data</h2>
-        <p>${escapeHtml(message)}</p>
-      </div>`;
+  function leadCountTags(lead) {
+    const openTag = lead.open_count > 0
+      ? `<span class="tag tag-accent">${lead.open_count} open</span>`
+      : `<span class="tag tag-neutral">all closed</span>`;
+    return `${openTag}<span class="tag tag-neutral">${lead.total_count} total</span>`;
   }
 
-  function renderEmpty() {
-    resultsEl.innerHTML = `
-      <div class="state-box">
-        <h2>No matching violations</h2>
-        <p>No buildings matched these filters. Try widening the pest type or status filter.</p>
-      </div>`;
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str == null ? '' : String(str);
-    return div.innerHTML;
-  }
-
-  function statusBadge(lead) {
-    if (lead.open_count > 0) {
-      return `<span class="badge open">${lead.open_count} open</span>`;
+  function renderList(zipExists) {
+    if (currentLeads.length === 0) {
+      listFrameEl.innerHTML = zipExists === false
+        ? `<div class="state-box"><h3>That zip code doesn't exist</h3><p>NYC has no registered residential buildings for that zip — double-check the digits.</p></div>`
+        : `<div class="state-box"><h3>No matching violations</h3><p>Try widening the pest type or status filter.</p></div>`;
+      return;
     }
-    return `<span class="badge">all closed</span>`;
-  }
+    listFrameEl.innerHTML = currentLeads.map((lead) => `
+      <div class="lead-row ${lead.buildingid === selectedBuildingId ? 'selected' : ''}" data-buildingid="${escapeHtml(lead.buildingid)}" tabindex="0">
+        <div class="lead-addr">${escapeHtml(lead.address || 'Unknown address')}</div>
+        <div class="lead-owner">${escapeHtml(lead.owner_name || 'Not found in HPD registration')}</div>
+        <div class="lead-id">Building ID ${escapeHtml(lead.buildingid)}${lead.bin ? ' &middot; BIN ' + escapeHtml(lead.bin) : ''}</div>
+        <div class="lead-counts">${leadCountTags(lead)}</div>
+      </div>`).join('');
 
-  const SORT_LABELS = {
-    total: 'total violation count',
-    most_recent: 'most recent violation date',
-    open: 'open violation count',
-    rodent: 'rodent violation count',
-    roach: 'roach violation count',
-  };
-
-  function renderTable(payload) {
-    const sortLabel = SORT_LABELS[payload.filters.sortBy] || SORT_LABELS.total;
-    const recentNote = payload.filters.recentDays ? `, with a violation in the last ${payload.filters.recentDays} days` : '';
-    const rows = payload.data.map((lead) => `
-      <tr class="clickable" data-buildingid="${escapeHtml(lead.buildingid)}" tabindex="0">
-        <td>
-          <div class="addr">${escapeHtml(lead.address || 'Unknown address')}</div>
-          <div class="muted">Building ID ${escapeHtml(lead.buildingid)}${lead.bin ? ' &middot; BIN ' + escapeHtml(lead.bin) : ''}</div>
-        </td>
-        <td>
-          <div>${escapeHtml(lead.owner_name || 'Not found in HPD registration')}</div>
-          ${lead.owner_type ? `<div class="muted">${escapeHtml(lead.owner_type)}</div>` : ''}
-        </td>
-        <td>${escapeHtml(lead.mailing_address || '—')}</td>
-        <td class="num">${lead.rodent_count}</td>
-        <td class="num">${lead.roach_count}</td>
-        <td class="num"><strong>${lead.total_count}</strong></td>
-        <td>${statusBadge(lead)}</td>
-        <td>${escapeHtml(lead.most_recent_violation_date || '—')}</td>
-      </tr>`).join('');
-
-    resultsEl.innerHTML = `
-      <div class="table-scroll">
-        <table>
-          <caption>${payload.count} of ${payload.total_matched_buildings.toLocaleString()} matching buildings shown${recentNote}, sorted by ${sortLabel} (highest/most recent first). Click a row for building detail.</caption>
-          <thead>
-            <tr>
-              <th>Building</th>
-              <th>Owner / Agent</th>
-              <th>Mailing address</th>
-              <th class="num">Rodent</th>
-              <th class="num">Roach</th>
-              <th class="num">Total</th>
-              <th>Status</th>
-              <th>Most recent</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
-
-    resultsEl.querySelectorAll('tbody tr[data-buildingid]').forEach((tr) => {
-      const open = () => openBuildingDetail(tr.dataset.buildingid);
-      tr.addEventListener('click', open);
-      tr.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
-      });
+    listFrameEl.querySelectorAll('.lead-row').forEach((row) => {
+      const select = () => selectLead(row.dataset.buildingid);
+      row.addEventListener('click', select);
+      row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); } });
     });
   }
 
-  // --- Building detail modal ---------------------------------------------
+  function selectLead(buildingid) {
+    selectedBuildingId = buildingid;
+    listFrameEl.querySelectorAll('.lead-row').forEach((row) => {
+      row.classList.toggle('selected', row.dataset.buildingid === buildingid);
+    });
+    openBuildingDetail(buildingid);
+  }
 
-  function openModal() { modalOverlay.classList.remove('hidden'); }
-  function closeModal() { modalOverlay.classList.add('hidden'); modalBody.innerHTML = ''; }
-
-  modalClose.addEventListener('click', closeModal);
-  modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !modalOverlay.classList.contains('hidden')) closeModal();
+  // Populated only when Print labels is clicked — the print-preview markup
+  // exists purely for the print dialog (@media print), never shown on-page.
+  printBtn.addEventListener('click', () => {
+    const seen = new Set();
+    const cards = [];
+    for (const lead of currentLeads) {
+      const key = `${lead.owner_name}|${lead.mailing_address}`;
+      if (!lead.owner_name || !lead.mailing_address || seen.has(key)) continue;
+      seen.add(key);
+      cards.push(lead);
+      if (cards.length === 4) break;
+    }
+    if (cards.length === 0) {
+      alert('No mailing addresses available to print yet — load some leads first.');
+      return;
+    }
+    printPreviewEl.innerHTML = cards.map((lead) => `
+      <div class="postcard"><strong>${escapeHtml(lead.owner_name)}</strong><br>${escapeHtml(lead.mailing_address)}</div>
+    `).join('');
+    window.print();
   });
 
+  async function load() {
+    const params = currentParams();
+    csvLink.href = buildUrl('/api/pest-leads.csv', params);
+    listLabelEl.textContent = 'Loading…';
+    listFrameEl.innerHTML = `<div class="state-box"><div class="spinner"></div><h3>Loading&hellip;</h3><p>This can take up to a minute right after a cache refresh.</p></div>`;
+
+    try {
+      const response = await fetch(buildUrl('/api/pest-leads', params));
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
+
+      metaLineEl.textContent = payload.pest_counts_last_refreshed
+        ? `Violation counts as of ${new Date(payload.pest_counts_last_refreshed).toLocaleString()} · fetched ${new Date(payload.fetched_at).toLocaleTimeString()}`
+        : '';
+      document.getElementById('statMatched').textContent = payload.total_matched_buildings.toLocaleString();
+      document.getElementById('statOpen').textContent = payload.total_open_count.toLocaleString();
+      document.getElementById('statActive7').textContent = payload.active_last_7_days.toLocaleString();
+      document.getElementById('statRefreshed').textContent = timeAgo(payload.pest_counts_last_refreshed);
+
+      currentLeads = payload.data || [];
+      listLabelEl.textContent = `${payload.count.toLocaleString()} of ${payload.total_matched_buildings.toLocaleString()} buildings`;
+      renderList(payload.zip_exists);
+
+      if (currentLeads.length > 0) {
+        selectLead(currentLeads[0].buildingid);
+      } else if (payload.zip_exists === false) {
+        detailColEl.innerHTML = `<div class="state-box"><h3>That zip code doesn't exist</h3><p>NYC has no registered residential buildings for that zip — double-check the digits.</p></div>`;
+      } else {
+        detailColEl.innerHTML = `<div class="state-box"><h3>No leads to show</h3><p>Adjust the filters and try again.</p></div>`;
+      }
+    } catch (err) {
+      listLabelEl.textContent = '';
+      listFrameEl.innerHTML = `<div class="state-box error"><h3>Couldn't reach NYC Open Data</h3><p>${escapeHtml(err.message || 'Unknown error')}</p></div>`;
+      detailColEl.innerHTML = '';
+    }
+  }
+
   function pestTag(type) {
-    return `<span class="pest-tag">${escapeHtml(type)}</span>`;
+    return `<span class="tag tag-neutral" style="font-size: 9px;">${escapeHtml((type || '').toUpperCase())}</span>`;
   }
 
   function websiteHostname(url) {
@@ -476,7 +422,7 @@
       <div class="contact-row">
         <div>
           <div><strong>${escapeHtml(c.name || 'Unnamed')}</strong></div>
-          <div class="muted">${escapeHtml(c.type || '')}</div>
+          <div class="text-muted" style="font-size: 12px;">${escapeHtml(c.type || '')}</div>
           ${links.length ? `<div class="contact-links">${links.join('')}</div>` : ''}
         </div>
         <div style="text-align:right">${escapeHtml(c.mailing_address || '—')}</div>
@@ -490,9 +436,9 @@
       <div class="violation-row">
         <div class="vtop">
           <span>${escapeHtml(v.date || '—')} &middot; Apt ${escapeHtml(v.apartment || '—')} ${pestTag(v.pest_type)}</span>
-          <span class="muted">${escapeHtml(v.status)}</span>
+          <span class="text-muted">${escapeHtml(v.status)}</span>
         </div>
-        <div class="muted">${escapeHtml(v.current_status || '')}</div>
+        <div class="text-muted">${escapeHtml(v.current_status || '')}</div>
       </div>`).join('');
     return `<div class="violation-list">${rows}</div>`;
   }
@@ -503,9 +449,9 @@
       <div class="violation-row">
         <div class="vtop">
           <span>${escapeHtml(d.issue_date || '—')}</span>
-          <span class="muted">${escapeHtml(d.category || '')}</span>
+          <span class="text-muted">${escapeHtml(d.category || '')}</span>
         </div>
-        <div class="muted">${escapeHtml((d.description || '').slice(0, 160))}</div>
+        <div class="text-muted">${escapeHtml((d.description || '').slice(0, 160))}</div>
       </div>`).join('');
     return `<div class="violation-list">${rows}</div>`;
   }
@@ -516,7 +462,7 @@
       <div class="deed-row">
         <div>
           <div><strong>${escapeHtml(d.from.join(', ') || 'Unknown')}</strong> &rarr; <strong>${escapeHtml(d.to.join(', ') || 'Unknown')}</strong></div>
-          <div class="muted">${escapeHtml(d.doc_type)} &middot; ${escapeHtml(d.date || '—')}</div>
+          <div class="text-muted">${escapeHtml(d.doc_type)} &middot; ${escapeHtml(d.date || '—')}</div>
         </div>
         <div>${d.amount ? '$' + d.amount.toLocaleString() : '—'}</div>
       </div>`).join('');
@@ -532,55 +478,65 @@
   }
 
   function renderBuildingDetail(detail, bannerHtml) {
-    modalBody.innerHTML = `
-      <h2>${escapeHtml(detail.address || 'Unknown address')}</h2>
-      <p class="modal-sub">
+    const total = detail.violations.length;
+    const open = detail.violations.filter((v) => v.status === 'Open').length;
+    const rodent = detail.violations.filter((v) => v.pest_type === 'rodent' || v.pest_type === 'both').length;
+    const roach = detail.violations.filter((v) => v.pest_type === 'roach' || v.pest_type === 'both').length;
+
+    detailColEl.innerHTML = `
+      <h1 style="margin-top: 0;">${escapeHtml(detail.address || 'Unknown address')}</h1>
+      <p class="lede">
         Building ID ${escapeHtml(detail.buildingid)}
         ${detail.bin ? ' &middot; BIN ' + escapeHtml(detail.bin) : ''}
         ${detail.block ? ' &middot; Block ' + escapeHtml(detail.block) + ' Lot ' + escapeHtml(detail.lot) : ''}
       </p>
       ${bannerHtml || ''}
+      <div class="tag-row" style="margin-bottom: 18px;">
+        <span class="tag tag-accent">${total} total violations</span>
+        <span class="tag tag-outline">${open} open</span>
+        <span class="tag tag-neutral">${rodent} rodent</span>
+        <span class="tag tag-neutral">${roach} roach</span>
+      </div>
 
       <div class="detail-section">
-        <h3>Registration contacts (${detail.contacts.length})</h3>
+        <div class="section-label">Registration contacts (${detail.contacts.length})</div>
         ${renderContacts(detail.contacts)}
       </div>
 
       <div class="detail-section">
-        <h3>Pest violations since 2024-01-01 (${detail.violations.length})</h3>
+        <div class="section-label">Pest violations since 2024-01-01 (${detail.violations.length})</div>
         ${renderViolations(detail.violations)}
       </div>
 
       <div class="detail-section">
-        <h3>Other buildings, same owner/agent (${detail.portfolio.length})</h3>
+        <div class="section-label">Other buildings, same owner/agent (${detail.portfolio.length})</div>
         ${renderPortfolio(detail.portfolio)}
       </div>
 
       <div class="detail-section">
-        <h3>ACRIS deed history (property records)</h3>
+        <div class="section-label">ACRIS deed history (property records)</div>
         ${renderDeeds(detail.deed_history)}
       </div>
 
       <div class="detail-section">
-        <h3>DOB violations (${detail.dob_violations.length})</h3>
+        <div class="section-label">DOB violations (${detail.dob_violations.length})</div>
         ${renderDob(detail.dob_violations)}
       </div>
     `;
 
-    modalBody.querySelectorAll('a[data-buildingid]').forEach((a) => {
+    detailColEl.querySelectorAll('a[data-buildingid]').forEach((a) => {
       a.addEventListener('click', (e) => {
         e.preventDefault();
-        openBuildingDetail(a.dataset.buildingid);
+        selectLead(a.dataset.buildingid);
       });
     });
   }
 
   async function openBuildingDetail(buildingid) {
-    openModal();
-    modalBody.innerHTML = `
+    detailColEl.innerHTML = `
       <div class="state-box">
         <div class="spinner"></div>
-        <h2>Loading building detail&hellip;</h2>
+        <h3>Loading building detail&hellip;</h3>
         <p>Pulling HPD, DOB, and ACRIS records live.</p>
       </div>`;
     try {
@@ -589,23 +545,21 @@
       if (!response.ok) throw new Error(detail.error || `Request failed (${response.status})`);
       renderBuildingDetail(detail);
     } catch (err) {
-      modalBody.innerHTML = `
+      detailColEl.innerHTML = `
         <div class="state-box error">
-          <h2>Couldn't load building detail</h2>
+          <h3>Couldn't load building detail</h3>
           <p>${escapeHtml(err.message || 'Unknown error')}</p>
         </div>`;
     }
   }
 
-  const addressSearchForm = document.getElementById('addressSearchForm');
-  const addressInput = document.getElementById('addressInput');
-
   async function openAddressSearch(address) {
-    openModal();
-    modalBody.innerHTML = `
+    selectedBuildingId = null;
+    listFrameEl.querySelectorAll('.lead-row.selected').forEach((row) => row.classList.remove('selected'));
+    detailColEl.innerHTML = `
       <div class="state-box">
         <div class="spinner"></div>
-        <h2>Looking up &ldquo;${escapeHtml(address)}&rdquo;&hellip;</h2>
+        <h3>Looking up &ldquo;${escapeHtml(address)}&rdquo;&hellip;</h3>
         <p>Geocoding the address, then pulling HPD, DOB, and ACRIS records live.</p>
       </div>`;
     try {
@@ -615,67 +569,44 @@
 
       if (result.status === 'found' || result.status === 'no_violations') {
         const banner = result.status === 'no_violations'
-          ? `<div class="notice">${escapeHtml(result.message)}</div>`
+          ? `<div class="tag tag-neutral" style="display:block; margin-bottom: 14px; padding: 8px 12px;">${escapeHtml(result.message)}</div>`
           : '';
         renderBuildingDetail(result.detail, banner);
         return;
       }
 
-      // not_found / no_building / no_registration — no building detail to show.
-      const heading = result.status === 'not_found' ? "Address not found" : "Found the address, but&hellip;";
-      modalBody.innerHTML = `
+      const heading = result.status === 'not_found' ? 'Address not found'
+        : result.status === 'too_vague' ? 'Need a bit more detail'
+        : 'Found the address, but…';
+      detailColEl.innerHTML = `
         <div class="state-box">
-          <h2>${heading}</h2>
+          <h3>${heading}</h3>
           <p>${escapeHtml(result.message)}</p>
-          ${result.resolved_address ? `<p class="muted">NYC resolved this to: ${escapeHtml(result.resolved_address)}</p>` : ''}
+          ${result.resolved_address ? `<p class="text-muted">NYC resolved this to: ${escapeHtml(result.resolved_address)}</p>` : ''}
         </div>`;
     } catch (err) {
-      modalBody.innerHTML = `
+      detailColEl.innerHTML = `
         <div class="state-box error">
-          <h2>Couldn't look up that address</h2>
+          <h3>Couldn't look up that address</h3>
           <p>${escapeHtml(err.message || 'Unknown error')}</p>
         </div>`;
     }
   }
 
-  addressSearchForm.addEventListener('submit', (e) => {
+  filterForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const address = addressInput.value.trim();
-    if (!address) return;
-    openAddressSearch(address);
-  });
-
-  async function load() {
-    const params = currentParams();
-    csvLink.href = buildUrl('/api/pest-leads.csv', params);
-    renderLoading();
-    try {
-      const response = await fetch(buildUrl('/api/pest-leads', params));
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
-
-      metaLineEl.textContent = payload.pest_counts_last_refreshed
-        ? `Violation counts as of ${new Date(payload.pest_counts_last_refreshed).toLocaleString()} · fetched ${new Date(payload.fetched_at).toLocaleTimeString()}`
-        : '';
-
-      if (!payload.data || payload.data.length === 0) {
-        renderEmpty();
-        return;
-      }
-      renderTable(payload);
-    } catch (err) {
-      renderError(err.message || 'Unknown error');
+    const parsed = classifySearch(searchEl.value.trim());
+    if (parsed.type === 'invalid_zip') {
+      showSearchError('That\'s not a valid 5-digit zip code — double check the digits.');
+      return;
     }
-  }
-
-  refreshBtn.addEventListener('click', load);
-  pestTypeEl.addEventListener('change', load);
-  statusEl.addEventListener('change', load);
-  limitEl.addEventListener('change', load);
-  zipEl.addEventListener('change', load);
-  zipEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') load(); });
-  sortByEl.addEventListener('change', load);
-  recentDaysEl.addEventListener('change', load);
+    clearSearchError();
+    load();
+    if (parsed.type === 'address') {
+      openAddressSearch(parsed.value);
+    }
+  });
+  searchEl.addEventListener('input', clearSearchError);
 
   load();
 </script>
