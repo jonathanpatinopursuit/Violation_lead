@@ -313,7 +313,7 @@
   function renderList(zipExists) {
     if (currentLeads.length === 0) {
       listFrameEl.innerHTML = zipExists === false
-        ? `<div class="state-box"><h3>That zip code doesn't exist</h3><p>NYC has no registered residential buildings for that zip — double-check the digits.</p></div>`
+        ? `<div class="state-box"><h3>No NYC data for that zip code</h3><p>This tool only covers the five NYC boroughs — that zip may be outside NYC (like Mount Vernon or Yonkers), or it could be mistyped.</p></div>`
         : `<div class="state-box"><h3>No matching violations</h3><p>Try widening the pest type or status filter.</p></div>`;
       return;
     }
@@ -401,7 +401,7 @@
       if (currentLeads.length > 0) {
         selectLead(currentLeads[0].buildingid);
       } else if (payload.zip_exists === false) {
-        detailColEl.innerHTML = `<div class="section-label">Lead Detail</div><div class="state-box"><h3>That zip code doesn't exist</h3><p>NYC has no registered residential buildings for that zip — double-check the digits.</p></div>`;
+        detailColEl.innerHTML = `<div class="section-label">Lead Detail</div><div class="state-box"><h3>No NYC data for that zip code</h3><p>This tool only covers the five NYC boroughs — that zip may be outside NYC (like Mount Vernon or Yonkers), or it could be mistyped.</p></div>`;
       } else {
         detailColEl.innerHTML = `<div class="section-label">Lead Detail</div><div class="state-box"><h3>No leads to show</h3><p>Adjust the filters and try again.</p></div>`;
       }
