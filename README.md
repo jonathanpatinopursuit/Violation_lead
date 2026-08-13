@@ -1,102 +1,59 @@
-# Violation Lead
+# Pest Violation Lead List
 
-A lead-generation tool for pest control outreach: NYC buildings ranked by
-rodent + roach HPD housing violations since 2024-01-01, cross-referenced with
-HPD's building registration data to attach the current owner/agent's name and
-mailing address — for postcards or in-person visits (no phone/email
-collected). Click into any building for its full violation history, every
-registration contact on file, NYC Dept. of Buildings violations, ACRIS deed
-history, and other buildings registered under the same owner/agent.
+A lead-generation tool that helps pest control companies find new customers
+in NYC. It turns the city's own public housing violation records into a
+ranked list of buildings with active rodent or roach problems — each one
+matched to the property's owner or managing agent, ready for postcards,
+calls, or an in-person visit.
 
-**Everything is fetched live** from [NYC Open Data](https://opendata.cityofnewyork.us/)
-on each request — nothing is a static download.
+**Live:** [violationlead.vercel.app](https://violationlead.vercel.app)
+
+## What it does
+
+- **Ranks NYC buildings** by verified rodent and roach violations logged
+  with HPD since January 2024 — pulled live on every request, not a static
+  download.
+- **Attaches a real contact** for each building: the registered owner or
+  managing agent's name and mailing address, sourced from HPD's own
+  registration filings.
+- **Search any address or zip code** and get a straight answer — active
+  violations, a clean record, or an honest "that's not a real NYC address."
+- **Click into any building** for its full violation history, every contact
+  on file, NYC Dept. of Buildings records, property deed history, and every
+  other building registered to the same owner — so a landlord sitting on
+  violations across a whole portfolio doesn't hide behind one address.
+- **Filter by pest type, status, or recency** — buildings with a violation
+  in the last 7 days are a very different lead than one from a year ago.
+- **Export a CSV** or **print postcard labels** for every unique mailing
+  address in your current results, ready to mail.
 
 ## Where the data comes from
 
-- **[HPD Housing Maintenance Code Violations](https://data.cityofnewyork.us/City-Government/Housing-Maintenance-Code-Violations/wvxf-dwi5)**
-  (`wvxf-dwi5`) — full violation history (open + closed), filtered for
-  rodent/rat/mice and roach/cockroach infestation language in
-  `novdescription`, grouped by `buildingid`.
-- **[Multiple Dwelling Registrations](https://data.cityofnewyork.us/Housing-Development/Multiple-Dwelling-Registrations/tesw-yqqr)**
-  (`tesw-yqqr`) — maps `buildingid` to the building's current `registrationid`
-  (most recent by `lastregistrationdate`).
-- **[Registration Contacts](https://data.cityofnewyork.us/Housing-Development/Registration-Contacts/feu5-w2e2)**
-  (`feu5-w2e2`) — the owner/agent's name + business mailing address for that
-  registration. Preference order when a building has multiple contacts on
-  file: Agent > CorporateOwner > IndividualOwner > JointOwner > HeadOfficer >
-  Officer > Lessee > Shareholder > SiteManager.
-- **[DOB Violations](https://data.cityofnewyork.us/Housing-Development/DOB-Violations/3h2n-5cm9)**
-  (`3h2n-5cm9`) — NYC Dept. of Buildings violations (elevators, boilers,
-  construction — not HPD housing code), keyed by BIN, shown in the building
-  detail panel.
-- **ACRIS** (Dept. of Finance property recording system) — deed transfer
-  history by borough/block/lot, joined across three datasets: **Real Property
-  Legals** (`8h5j-fqxa`, maps a BBL to document ids), **Real Property Master**
-  (`bnx9-e6tj`, doc type/date), and **Real Property Parties** (`636b-3b5g`,
-  grantor/grantee names). Shown in the building detail panel.
-- **[NYC Planning GeoSearch](https://geosearch.planninglabs.nyc/)** — free,
-  no-key geocoder used by `/api/address-lookup` to resolve a typed address to
-  a BIN, which then feeds the same HPD/DOB/ACRIS pipeline as a lead click.
-- **[Google Custom Search JSON API](https://developers.google.com/custom-search/v1/overview)**
-  — used to find a CorporateOwner contact's actual business website (see
-  below). Chosen over Brave Search specifically because its 100 queries/day
-  free tier doesn't require adding a payment method.
+Everything is sourced live from public New York City records — nothing is
+scraped, guessed, or purchased:
 
-## Contact enrichment: websites, phone/email, and LinkedIn
+- **HPD Housing Maintenance Code Violations** — the official record of
+  every rodent/roach violation issued since 2024.
+- **HPD Multiple Dwelling Registrations** and **Registration Contacts** —
+  the legally required filing that names a building's owner or managing
+  agent and their mailing address.
+- **NYC Dept. of Buildings (DOB) Violations** — non-housing violations
+  (construction, elevators, boilers) for additional building context.
+- **ACRIS** (NYC Dept. of Finance) — recorded deed transfers, so you can see
+  a building's ownership history.
+- **NYC Planning GeoSearch** — resolves a typed address to a specific
+  building for the address-search feature.
 
-- **CorporateOwner contacts** get an automated website lookup via Google
-  Custom Search, filtered to exclude directory/social sites (LinkedIn, Yelp,
-  Zillow, BBB, etc.) so it's the company's own site or nothing. Requires
-  `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_CX` (see below) — without them, `website`
-  is always `null` and nothing else breaks. Results are cached 24h per
-  company name to stay well within the free daily quota.
-- **Once a website is found**, the server fetches that site's homepage (and,
-  if needed, a same-site page it finds a "Contact"-labeled link to) and
-  extracts a phone number and email with regex — this is the company's own
-  publicly published contact info, not a third-party people-search/data-broker
-  lookup. Best-effort only: it can't execute JavaScript, so contact-form-only
-  pages (no plain-text phone/email) won't yield anything. Results cached 24h
-  per site. Both `email` and `phone` are `null` until a website is found,
-  same as `website` itself.
-- **Every contact** (agent, head officer, shareholders, site manager,
-  individual/joint owners, and the corporate owner too) also gets a
-  `linkedin_search_url` and a `google_search_url` — pre-filled search links,
-  not automated matches. There's no legitimate API for bulk LinkedIn
-  people-search, and matching common names automatically would produce false
-  positives, so this puts a human in the loop to verify. These links work
-  with zero setup, regardless of whether the Google CSE keys are configured.
+## A known limitation
 
-## API
-
-- `GET /api/pest-leads` — the ranked lead list. Query params: `pestType`
-  (`all` | `rodent` | `roach`), `status` (`all` | `open` | `closed`), `zip`
-  (5-digit), `sortBy` (`total` | `most_recent` | `open` | `rodent` | `roach`),
-  `recentDays` (only buildings with a violation issued in the last N days —
-  useful since property managers are more receptive right after an
-  inspection than months later), `limit` (default 100, max 500 — caps how
-  many buildings get the registration/contact lookup, since that's the
-  expensive part).
-- `GET /api/pest-leads.csv` — same filters, CSV export for mail-merge.
-- `GET /api/buildings/:buildingid` — full detail for one building: every
-  individual pest violation, every registration contact (with website/LinkedIn
-  enrichment, see above), DOB violations, ACRIS deed history, and other
-  buildings under the same owner/agent ("portfolio" — an exact
-  case-insensitive name match against HPD's own filings, not a verified
-  identity match).
-- `GET /api/address-lookup?address=...` — type any address, get back whether
-  it has pest violations (`found`), has none (`no_violations`), is a real
-  building with no HPD registration (`no_registration`), or isn't a
-  recognized NYC address (`not_found`).
-
-## Why some things are cached
-
-Socrata has no index on `novdescription`, so a `LIKE '%ROACH%'` text scan
-over 2024+ violations (2M+ rows) takes ~40 seconds per pest type even
-aggregated server-side. `server.js` caches those two aggregate queries in
-memory for 30 minutes so the leads list stays fast — violation *counts*
-refresh on that cadence, but owner/agent lookups (and everything in the
-building detail panel) are always fetched live. `vercel.json` sets
-`maxDuration: 60` so a cold cache miss doesn't time out.
+City records give you a name and a mailing address — not a phone number or
+an email. The tool attempts to fill that gap by finding a corporate owner's
+own website (via Google Custom Search) and pulling published contact info
+off it, but Google closed that search API to new developer accounts, so
+this feature is currently dormant for any freshly created API key. In the
+meantime, every contact has one-click "Search Google" and "Search LinkedIn"
+links so you can track down a number or email yourself — no data-broker
+scraping, no bulk people-search, just a fast starting point.
 
 ## Running locally
 
@@ -108,27 +65,32 @@ npm start               # http://localhost:3000
 
 Get a free Socrata app token at
 [data.cityofnewyork.us/profile/app_tokens](https://data.cityofnewyork.us/profile/app_tokens)
-and put it in `.env` as `NYC_OPEN_DATA_TOKEN`. Without it, requests still
-work but are rate-limited more aggressively.
+and set it as `NYC_OPEN_DATA_TOKEN` in `.env`. The app still runs without
+it, just with tighter rate limits.
 
-For corporate-owner website lookups, set up a free Google Custom Search
-key (100 queries/day, no credit card required):
+Optional: `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_CX` enable the corporate
+website lookup described above, on Google accounts where it's still
+available. Everything else works fine without them.
 
-1. [Google Cloud Console](https://console.cloud.google.com/apis/library/customsearch.googleapis.com) —
-   create/select a project, enable the "Custom Search API," then create an
-   API key under **APIs & Services > Credentials**. Put it in `.env` as
-   `GOOGLE_CSE_API_KEY`.
-2. [Programmable Search Engine](https://programmablesearchengine.google.com/) —
-   create a new search engine, turn on "Search the entire web," and copy its
-   Search Engine ID. Put it in `.env` as `GOOGLE_CSE_CX`.
+## API reference
 
-Without both, everything else still works — `website` just stays `null` on
-every contact, and the search-link fallbacks (`google_search_url`,
-`linkedin_search_url`) work regardless.
+| Endpoint | What it returns |
+|---|---|
+| `GET /api/pest-leads` | Ranked lead list. Filter with `pestType`, `status`, `zip`, `sortBy`, `recentDays`, `limit`. |
+| `GET /api/pest-leads.csv` | Same filters, as a CSV for mail-merge. |
+| `GET /api/buildings/:buildingid` | Full detail for one building — violations, contacts, DOB records, deed history, and other buildings under the same owner. |
+| `GET /api/address-lookup?address=...` | Look up any address directly. |
+
+## Technical notes
+
+Socrata (NYC's data platform) has no index on violation descriptions, so a
+full-text search across 2M+ rows takes up to a minute. The server caches
+that aggregate query for 30 minutes so the leads list stays fast for
+everyone — building-level detail (contacts, violation history, deed
+records) is always fetched fresh.
 
 ## Deployment
 
-Not yet deployed. To put this on Vercel: `vercel link` a new project, set
-`NYC_OPEN_DATA_TOKEN` as an environment variable (Production + Preview), and
-deploy — `server.js` runs directly as the entrypoint, same as this repo's
-sibling project (`nyc`).
+Deployed on [Vercel](https://vercel.com) at
+[violationlead.vercel.app](https://violationlead.vercel.app), auto-deploying
+from `main` on push. `server.js` runs directly as the entrypoint.
