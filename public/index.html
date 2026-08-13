@@ -271,6 +271,16 @@
       </select>
     </div>
     <div class="field">
+      <label for="recentDays">Recently active</label>
+      <select id="recentDays">
+        <option value="">Any time</option>
+        <option value="7">Last 7 days</option>
+        <option value="14">Last 14 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+    </div>
+    <div class="field">
       <label for="limit"># of leads</label>
       <input type="number" id="limit" value="100" min="1" max="500" step="1" />
     </div>
@@ -304,6 +314,7 @@
   const statusEl = document.getElementById('status');
   const zipEl = document.getElementById('zip');
   const sortByEl = document.getElementById('sortBy');
+  const recentDaysEl = document.getElementById('recentDays');
   const limitEl = document.getElementById('limit');
   const refreshBtn = document.getElementById('refreshBtn');
   const csvLink = document.getElementById('csvLink');
@@ -316,6 +327,7 @@
     const params = { pestType: pestTypeEl.value, status: statusEl.value, limit, sortBy: sortByEl.value };
     const zip = zipEl.value.trim();
     if (/^\d{5}$/.test(zip)) params.zip = zip;
+    if (recentDaysEl.value) params.recentDays = recentDaysEl.value;
     return params;
   }
 
@@ -373,6 +385,7 @@
 
   function renderTable(payload) {
     const sortLabel = SORT_LABELS[payload.filters.sortBy] || SORT_LABELS.total;
+    const recentNote = payload.filters.recentDays ? `, with a violation in the last ${payload.filters.recentDays} days` : '';
     const rows = payload.data.map((lead) => `
       <tr class="clickable" data-buildingid="${escapeHtml(lead.buildingid)}" tabindex="0">
         <td>
@@ -394,7 +407,7 @@
     resultsEl.innerHTML = `
       <div class="table-scroll">
         <table>
-          <caption>${payload.count} of ${payload.total_matched_buildings.toLocaleString()} matching buildings shown, sorted by ${sortLabel} (highest/most recent first). Click a row for building detail.</caption>
+          <caption>${payload.count} of ${payload.total_matched_buildings.toLocaleString()} matching buildings shown${recentNote}, sorted by ${sortLabel} (highest/most recent first). Click a row for building detail.</caption>
           <thead>
             <tr>
               <th>Building</th>
@@ -446,6 +459,12 @@
       const links = [];
       if (c.website) {
         links.push(`<a class="website-link" href="${escapeHtml(c.website)}" target="_blank" rel="noopener">${escapeHtml(websiteHostname(c.website))} &nearr;</a>`);
+      }
+      if (c.phone) {
+        links.push(`<a href="tel:${escapeHtml(c.phone.replace(/[^\d+]/g, ''))}">${escapeHtml(c.phone)}</a>`);
+      }
+      if (c.email) {
+        links.push(`<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>`);
       }
       if (c.google_search_url) {
         links.push(`<a href="${escapeHtml(c.google_search_url)}" target="_blank" rel="noopener">Search Google &nearr;</a>`);
@@ -656,6 +675,7 @@
   zipEl.addEventListener('change', load);
   zipEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') load(); });
   sortByEl.addEventListener('change', load);
+  recentDaysEl.addEventListener('change', load);
 
   load();
 </script>

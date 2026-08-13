@@ -42,7 +42,7 @@ on each request — nothing is a static download.
   below). Chosen over Brave Search specifically because its 100 queries/day
   free tier doesn't require adding a payment method.
 
-## Contact enrichment: websites and LinkedIn
+## Contact enrichment: websites, phone/email, and LinkedIn
 
 - **CorporateOwner contacts** get an automated website lookup via Google
   Custom Search, filtered to exclude directory/social sites (LinkedIn, Yelp,
@@ -50,6 +50,14 @@ on each request — nothing is a static download.
   `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_CX` (see below) — without them, `website`
   is always `null` and nothing else breaks. Results are cached 24h per
   company name to stay well within the free daily quota.
+- **Once a website is found**, the server fetches that site's homepage (and,
+  if needed, a same-site page it finds a "Contact"-labeled link to) and
+  extracts a phone number and email with regex — this is the company's own
+  publicly published contact info, not a third-party people-search/data-broker
+  lookup. Best-effort only: it can't execute JavaScript, so contact-form-only
+  pages (no plain-text phone/email) won't yield anything. Results cached 24h
+  per site. Both `email` and `phone` are `null` until a website is found,
+  same as `website` itself.
 - **Every contact** (agent, head officer, shareholders, site manager,
   individual/joint owners, and the corporate owner too) also gets a
   `linkedin_search_url` and a `google_search_url` — pre-filled search links,
@@ -63,8 +71,11 @@ on each request — nothing is a static download.
 - `GET /api/pest-leads` — the ranked lead list. Query params: `pestType`
   (`all` | `rodent` | `roach`), `status` (`all` | `open` | `closed`), `zip`
   (5-digit), `sortBy` (`total` | `most_recent` | `open` | `rodent` | `roach`),
-  `limit` (default 100, max 500 — caps how many buildings get the
-  registration/contact lookup, since that's the expensive part).
+  `recentDays` (only buildings with a violation issued in the last N days —
+  useful since property managers are more receptive right after an
+  inspection than months later), `limit` (default 100, max 500 — caps how
+  many buildings get the registration/contact lookup, since that's the
+  expensive part).
 - `GET /api/pest-leads.csv` — same filters, CSV export for mail-merge.
 - `GET /api/buildings/:buildingid` — full detail for one building: every
   individual pest violation, every registration contact (with website/LinkedIn

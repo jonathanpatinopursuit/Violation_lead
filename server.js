@@ -267,6 +267,102 @@ async function findCompanyWebsite(companyName) {
   return websiteCacheInFlight.get(key);
 }
 
+// ---------------------------------------------------------------------------
+// Phone/email scraper — once a CorporateOwner's actual website is found
+// (findCompanyWebsite, above), pull a phone number and email off it. This is
+// the company's own publicly published contact info (usually a "Contact us"
+// page), not a third-party people-search/data-broker lookup — the same kind
+// of info a human would find by clicking the site themselves.
+// ---------------------------------------------------------------------------
+
+const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+const PHONE_RE = /\(?\b\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}\b/;
+// Common placeholder/tracking addresses that show up in page markup but
+// aren't a real contact — skip these rather than "finding" a fake lead.
+const GENERIC_EMAIL_PREFIXES = ['noreply', 'no-reply', 'donotreply', 'webmaster', 'postmaster'];
+
+function extractContactInfo(html) {
+  const emailMatch = [...html.matchAll(new RegExp(EMAIL_RE, 'g'))]
+    .map((m) => m[0])
+    .find((email) => !GENERIC_EMAIL_PREFIXES.some((p) => email.toLowerCase().startsWith(p)));
+  const phoneMatch = html.match(PHONE_RE);
+  return {
+    email: emailMatch || null,
+    phone: phoneMatch ? phoneMatch[0] : null,
+  };
+}
+
+async function fetchPageText(url, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      headers: { Accept: 'text/html', 'User-Agent': 'Mozilla/5.0 (compatible; ViolationLeadBot/1.0)' },
+      signal: controller.signal,
+      redirect: 'follow',
+    });
+    if (!response.ok) return null;
+    return await response.text();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// Finds a same-site link that looks like a contact page — checked before
+// falling back to just the homepage, since phone/email usually live there.
+function findContactPageUrl(homepageHtml, baseUrl) {
+  const linkRe = /<a\s[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
+  for (const match of homepageHtml.matchAll(linkRe)) {
+    const href = match[1];
+    const text = match[2].replace(/<[^>]+>/g, '').trim().toLowerCase();
+    if (/contact/i.test(href) || /contact/i.test(text)) {
+      try {
+        return new URL(href, baseUrl).toString();
+      } catch {
+        continue;
+      }
+    }
+  }
+  return null;
+}
+
+const CONTACT_INFO_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const contactInfoCache = new Map(); // website -> { data, fetchedAt }
+const contactInfoCacheInFlight = new Map();
+
+async function findWebsiteContactInfo(website) {
+  if (!website) return { email: null, phone: null };
+
+  const hit = contactInfoCache.get(website);
+  if (hit && Date.now() - hit.fetchedAt < CONTACT_INFO_CACHE_TTL_MS) return hit.data;
+
+  if (!contactInfoCacheInFlight.has(website)) {
+    const promise = (async () => {
+      let data = { email: null, phone: null };
+      const homepageHtml = await fetchPageText(website);
+      if (homepageHtml) {
+        data = extractContactInfo(homepageHtml);
+        if (!data.email || !data.phone) {
+          const contactUrl = findContactPageUrl(homepageHtml, website);
+          const contactHtml = contactUrl ? await fetchPageText(contactUrl) : null;
+          if (contactHtml) {
+            const fromContactPage = extractContactInfo(contactHtml);
+            data = { email: data.email || fromContactPage.email, phone: data.phone || fromContactPage.phone };
+          }
+        }
+      }
+      contactInfoCache.set(website, { data, fetchedAt: Date.now() });
+      return data;
+    })().finally(() => {
+      contactInfoCacheInFlight.delete(website);
+    });
+    contactInfoCacheInFlight.set(website, promise);
+  }
+  return contactInfoCacheInFlight.get(website);
+}
+
 // Socrata has no index on novdescription, so `upper(novdescription) like
 // '%ROACH%'` has to text-scan every 2024+ violation (2M+ rows) — about 40s
 // per pest type, even though it's grouped/aggregated server-side. Building
@@ -390,7 +486,7 @@ const LEAD_SORTERS = {
 // Builds the sorted, enriched lead list. `limit` caps how many buildings get
 // the (expensive) registration + contact lookups — those only run for the
 // top-N by the chosen sort, since that's what "best leads" means here.
-async function getPestLeads({ limit = 100, pestType = 'all', status = 'all', zip = null, sortBy = 'total' } = {}) {
+async function getPestLeads({ limit = 100, pestType = 'all', status = 'all', zip = null, sortBy = 'total', recentDays = null } = {}) {
   const { rodentRows, roachRows, fetchedAt: pestDataAsOf } = await getCachedPestAggregates();
   let leads = aggregatePestRows(rodentRows, roachRows);
 
@@ -408,6 +504,15 @@ async function getPestLeads({ limit = 100, pestType = 'all', status = 'all', zip
 
   if (status === 'open') leads = leads.filter((l) => l.open_count > 0);
   else if (status === 'closed') leads = leads.filter((l) => l.closed_count > 0);
+
+  // "Recently active" — buildings whose most recent pest violation was issued
+  // within the last N days. Property managers are far more receptive right
+  // after an inspection than months later, so this surfaces fresh leads even
+  // if the building's all-time total is modest.
+  if (recentDays) {
+    const cutoff = new Date(Date.now() - recentDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    leads = leads.filter((l) => l.most_recent_violation_date && l.most_recent_violation_date >= cutoff);
+  }
 
   const totalMatchedBuildings = leads.length;
   leads.sort(LEAD_SORTERS[sortBy] || LEAD_SORTERS.total);
@@ -712,11 +817,15 @@ async function getBuildingDetail(buildingid) {
   const enrichedContactsPromise = Promise.all(
     contacts.map(async (c) => {
       const name = formatOwnerName(c);
+      const website = c.type === 'CorporateOwner' ? await findCompanyWebsite(name) : null;
+      const contactInfo = website ? await findWebsiteContactInfo(website) : { email: null, phone: null };
       return {
         type: c.type,
         name,
         mailing_address: formatMailingAddress(c),
-        website: c.type === 'CorporateOwner' ? await findCompanyWebsite(name) : null,
+        website,
+        email: contactInfo.email,
+        phone: contactInfo.phone,
         google_search_url: googleSearchUrl(name),
         linkedin_search_url: linkedinSearchUrl(c, companyName),
       };
@@ -840,7 +949,9 @@ function parseLeadsQuery(query) {
   const status = ['open', 'closed'].includes(query.status) ? query.status : 'all';
   const zip = /^\d{5}$/.test(query.zip || '') ? query.zip : null;
   const sortBy = Object.keys(LEAD_SORTERS).includes(query.sortBy) ? query.sortBy : 'total';
-  return { limit, pestType, status, zip, sortBy };
+  const parsedRecentDays = parseInt(query.recentDays, 10);
+  const recentDays = Number.isFinite(parsedRecentDays) && parsedRecentDays > 0 ? parsedRecentDays : null;
+  return { limit, pestType, status, zip, sortBy, recentDays };
 }
 
 function csvEscape(value) {
@@ -891,15 +1002,15 @@ const app = express();
 // mailing address attached for outreach.
 app.get('/api/pest-leads', async (req, res) => {
   try {
-    const { limit, pestType, status, zip, sortBy } = parseLeadsQuery(req.query);
-    const { leads, totalMatchedBuildings, pestDataAsOf } = await getPestLeads({ limit, pestType, status, zip, sortBy });
+    const { limit, pestType, status, zip, sortBy, recentDays } = parseLeadsQuery(req.query);
+    const { leads, totalMatchedBuildings, pestDataAsOf } = await getPestLeads({ limit, pestType, status, zip, sortBy, recentDays });
     res.json({
       source:
         'NYC Open Data — HPD Housing Maintenance Code Violations (wvxf-dwi5), Multiple Dwelling Registrations (tesw-yqqr), Registration Contacts (feu5-w2e2)',
       timeframe: '2024-01-01 to present',
       fetched_at: new Date().toISOString(),
       pest_counts_last_refreshed: pestDataAsOf ? new Date(pestDataAsOf).toISOString() : null,
-      filters: { pestType, status, limit, zip, sortBy },
+      filters: { pestType, status, limit, zip, sortBy, recentDays },
       total_matched_buildings: totalMatchedBuildings,
       count: leads.length,
       data: leads,
@@ -911,8 +1022,8 @@ app.get('/api/pest-leads', async (req, res) => {
 
 app.get('/api/pest-leads.csv', async (req, res) => {
   try {
-    const { limit, pestType, status, zip, sortBy } = parseLeadsQuery(req.query);
-    const { leads } = await getPestLeads({ limit, pestType, status, zip, sortBy });
+    const { limit, pestType, status, zip, sortBy, recentDays } = parseLeadsQuery(req.query);
+    const { leads } = await getPestLeads({ limit, pestType, status, zip, sortBy, recentDays });
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="pest-leads.csv"');
     res.send(leadsToCsv(leads));
