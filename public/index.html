@@ -13,17 +13,14 @@
   * { box-sizing: border-box; }
   a { cursor: pointer; }
 
-  .nav { border-bottom: 1px solid var(--color-divider); }
+  .nav { border-bottom: 1px solid var(--color-divider); padding-top: var(--space-4); padding-bottom: var(--space-4); }
   .nav .spacer { flex: 1 1 auto; }
   .nav a[aria-current='page'] { color: var(--color-text); font-weight: 600; }
+  .nav-brand { font-size: 26px; letter-spacing: -0.01em; }
 
   .page { max-width: 1400px; margin: 0 auto; padding: 26px 28px 60px; }
   h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: 0.01em; }
   .lede { margin: 0 0 20px; font-size: 13px; color: var(--color-neutral-700); max-width: 72ch; }
-
-  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin-bottom: 22px; }
-  .stat-row .card { padding: 14px 16px; }
-  .stat-row .card-title { font-size: 22px; }
 
   .filter-bar { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end; padding: 14px 16px; border: 1px solid var(--color-neutral-300); margin-bottom: 20px; }
   .filter-bar .field { min-width: 130px; }
@@ -32,6 +29,7 @@
 
   .icon { display: inline-block; vertical-align: -2px; }
   .section-label { font-family: var(--font-heading); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-neutral-700); margin: 0 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--color-neutral-300); }
+  .detail-col > .section-label { text-align: center; font-weight: 700; color: var(--color-text); }
   .tag-row { display: flex; gap: 6px; flex-wrap: wrap; }
 
   .contact-row, .deed-row, .portfolio-row {
@@ -55,7 +53,7 @@
 
   .layout { display: flex; gap: 22px; align-items: flex-start; }
   .list-col { width: 420px; flex: none; }
-  .detail-col { flex: 1; min-width: 0; }
+  .detail-col { flex: 1; min-width: 0; margin-top: 48px; }
 
   .list-frame { border: 1px solid var(--color-neutral-300); max-height: 720px; overflow-y: auto; }
   .lead-row { padding: 12px 14px; border-bottom: 1px solid var(--color-neutral-200); cursor: pointer; }
@@ -78,6 +76,7 @@
     padding: 20px; background: var(--color-surface); border: 1px solid var(--color-neutral-300);
     display: flex; flex-direction: column; justify-content: space-between;
     font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; min-height: 140px;
+    break-inside: avoid; page-break-inside: avoid;
   }
 
   .state-box {
@@ -87,6 +86,32 @@
   .state-box.error { color: #a33; background: color-mix(in srgb, #a33 8%, transparent); border-color: #a33; }
   .state-box h3 { font-size: 16px; margin: 0 0 6px; }
   .state-box p { margin: 0; font-size: 13px; }
+
+  .disclosure {
+    margin: 0 0 18px;
+    border: 1px solid var(--color-neutral-300);
+    background: var(--color-surface);
+    font-size: 12.5px; color: var(--color-neutral-800);
+  }
+  .disclosure summary {
+    display: flex; gap: 8px; align-items: center;
+    padding: 10px 14px; cursor: pointer;
+    font-family: var(--font-heading); font-size: 13px;
+    color: var(--color-neutral-800);
+    list-style: none;
+  }
+  .disclosure summary::-webkit-details-marker { display: none; }
+  .disclosure summary::after {
+    content: '▾'; margin-left: auto; color: var(--color-neutral-600); font-size: 11px;
+  }
+  .disclosure[open] summary::after { content: '▴'; }
+  .disclosure .icon-mark {
+    flex: none; font-weight: 700; color: #fff; background: var(--color-accent-700);
+    width: 16px; height: 16px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10.5px;
+  }
+  .disclosure p { margin: 0; padding: 0 14px 14px; line-height: 1.5; }
   .spinner {
     width: 26px; height: 26px; margin: 0 auto 16px;
     border: 3px solid var(--color-neutral-300); border-top-color: var(--color-accent);
@@ -98,7 +123,7 @@
   footer a { color: inherit; }
 
   @media print {
-    .nav, .lede, .stat-row, .filter-bar, .layout, footer, .meta-line { display: none !important; }
+    .nav, .lede, .filter-bar, .layout, footer, .meta-line { display: none !important; }
     .print-preview-wrap { display: block !important; margin: 0; }
     .print-preview { grid-template-columns: repeat(2, 1fr); }
     body { background: #fff; }
@@ -108,9 +133,7 @@
 <body>
 
 <nav class="nav">
-  <span class="nav-brand">Violation Lead</span>
-  <a href="#" aria-current="page">Leads</a>
-  <a href="#" id="portfolioNavLink" title="Coming soon">Portfolio</a>
+  <span class="nav-brand">Pest violation lead list</span>
   <div class="spacer"></div>
   <a id="csvLink" class="btn btn-secondary blueprint" href="#"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
     <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M17 8l-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
@@ -118,21 +141,19 @@
   </a>
   <button type="button" id="printBtn" class="btn btn-secondary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
     <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-    Print labels
+    <span id="printBtnLabel">Print labels</span>
   </button>
 </nav>
 
 <div class="page">
-  <h1>Pest violation leads</h1>
   <p class="lede">NYC buildings ranked by rodent + roach HPD violations since 2024-01-01, with owner/agent contact attached for outreach. Pulled live from NYC Open Data.</p>
-  <p class="lede meta-line" id="metaLine"></p>
 
-  <div class="stat-row" id="statRow">
-    <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Matching buildings</div><div class="card-title" id="statMatched">—</div></div>
-    <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Open violations</div><div class="card-title" id="statOpen">—</div></div>
-    <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Active last 7 days</div><div class="card-title" id="statActive7">—</div></div>
-    <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="card-kicker">Counts refreshed</div><div class="card-title" id="statRefreshed" style="font-size: 15px;">—</div></div>
-  </div>
+  <details class="disclosure">
+    <summary><span class="icon-mark">i</span> About these violation counts</summary>
+    <p>These are official HPD violations — reported, inspected, and confirmed by the city. But violation counts only reflect what's been reported and caught, not a building's actual pest conditions. A building with 2 violations could have a worse infestation than one with 8, if tenants haven't reported it or an inspector hasn't caught it yet. Use this list to identify strong leads, not to rank buildings by severity.</p>
+  </details>
+
+  <p class="lede meta-line" id="metaLine"></p>
 
   <form class="filter-bar" id="filterForm">
     <div class="field grow">
@@ -190,14 +211,19 @@
 
   <div class="layout" id="layout">
     <div class="list-col">
-      <div class="section-label" id="listLabel">Loading&hellip;</div>
-      <div class="list-frame" id="listFrame"></div>
+      <div class="section-label" id="listLabel">No search yet</div>
+      <div class="list-frame" id="listFrame">
+        <div class="state-box">
+          <h3>Enter a search or apply filters</h3>
+          <p>Search an address/zip above, or just click Apply to browse all leads with the current filters.</p>
+        </div>
+      </div>
     </div>
     <div class="detail-col" id="detailCol">
+      <div class="section-label">Lead Detail</div>
       <div class="state-box">
-        <div class="spinner"></div>
-        <h3>Loading leads&hellip;</h3>
-        <p>Pulling live data from NYC Open Data.</p>
+        <h3>Nothing loaded yet</h3>
+        <p>Building detail will appear here once you search or apply filters.</p>
       </div>
     </div>
   </div>
@@ -228,16 +254,10 @@
   const printBtn = document.getElementById('printBtn');
   const printPreviewWrap = document.getElementById('printPreviewWrap');
   const printPreviewEl = document.getElementById('printPreview');
-  const portfolioNavLink = document.getElementById('portfolioNavLink');
   const searchErrorEl = document.getElementById('searchError');
 
   let currentLeads = [];
   let selectedBuildingId = null;
-
-  portfolioNavLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    alert('Portfolio view is not built yet — for now, click any lead and see "Other buildings, same owner/agent" in its detail panel.');
-  });
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -283,17 +303,6 @@
     return url.toString();
   }
 
-  function timeAgo(iso) {
-    if (!iso) return '—';
-    const ms = Date.now() - new Date(iso).getTime();
-    const min = Math.round(ms / 60000);
-    if (min < 1) return 'just now';
-    if (min < 60) return `${min} min ago`;
-    const hr = Math.round(min / 60);
-    if (hr < 24) return `${hr} hr ago`;
-    return `${Math.round(hr / 24)} day${hr >= 48 ? 's' : ''} ago`;
-  }
-
   function leadCountTags(lead) {
     const openTag = lead.open_count > 0
       ? `<span class="tag tag-accent">${lead.open_count} open</span>`
@@ -333,7 +342,14 @@
 
   // Populated only when Print labels is clicked — the print-preview markup
   // exists purely for the print dialog (@media print), never shown on-page.
-  printBtn.addEventListener('click', () => {
+  // Prints one postcard per unique owner/agent + mailing address across the
+  // *entire* currently loaded list, not just a handful — dedup matters here
+  // since the same management company often shows up on multiple buildings
+  // in the list, and we don't want to mail them the same postcard twice.
+  // Which name/address that is per building is already decided server-side
+  // (see CONTACT_TYPE_PRIORITY in server.js): the managing agent first, and
+  // only the owner if that building has no agent on file.
+  function uniqueMailableLeads() {
     const seen = new Set();
     const cards = [];
     for (const lead of currentLeads) {
@@ -341,8 +357,17 @@
       if (!lead.owner_name || !lead.mailing_address || seen.has(key)) continue;
       seen.add(key);
       cards.push(lead);
-      if (cards.length === 4) break;
     }
+    return cards;
+  }
+
+  function updatePrintBtnLabel() {
+    const count = uniqueMailableLeads().length;
+    document.getElementById('printBtnLabel').textContent = count > 0 ? `Print labels (${count})` : 'Print labels';
+  }
+
+  printBtn.addEventListener('click', () => {
+    const cards = uniqueMailableLeads();
     if (cards.length === 0) {
       alert('No mailing addresses available to print yet — load some leads first.');
       return;
@@ -367,26 +392,25 @@
       metaLineEl.textContent = payload.pest_counts_last_refreshed
         ? `Violation counts as of ${new Date(payload.pest_counts_last_refreshed).toLocaleString()} · fetched ${new Date(payload.fetched_at).toLocaleTimeString()}`
         : '';
-      document.getElementById('statMatched').textContent = payload.total_matched_buildings.toLocaleString();
-      document.getElementById('statOpen').textContent = payload.total_open_count.toLocaleString();
-      document.getElementById('statActive7').textContent = payload.active_last_7_days.toLocaleString();
-      document.getElementById('statRefreshed').textContent = timeAgo(payload.pest_counts_last_refreshed);
 
       currentLeads = payload.data || [];
       listLabelEl.textContent = `${payload.count.toLocaleString()} of ${payload.total_matched_buildings.toLocaleString()} buildings`;
       renderList(payload.zip_exists);
+      updatePrintBtnLabel();
 
       if (currentLeads.length > 0) {
         selectLead(currentLeads[0].buildingid);
       } else if (payload.zip_exists === false) {
-        detailColEl.innerHTML = `<div class="state-box"><h3>That zip code doesn't exist</h3><p>NYC has no registered residential buildings for that zip — double-check the digits.</p></div>`;
+        detailColEl.innerHTML = `<div class="section-label">Lead Detail</div><div class="state-box"><h3>That zip code doesn't exist</h3><p>NYC has no registered residential buildings for that zip — double-check the digits.</p></div>`;
       } else {
-        detailColEl.innerHTML = `<div class="state-box"><h3>No leads to show</h3><p>Adjust the filters and try again.</p></div>`;
+        detailColEl.innerHTML = `<div class="section-label">Lead Detail</div><div class="state-box"><h3>No leads to show</h3><p>Adjust the filters and try again.</p></div>`;
       }
     } catch (err) {
+      currentLeads = [];
       listLabelEl.textContent = '';
       listFrameEl.innerHTML = `<div class="state-box error"><h3>Couldn't reach NYC Open Data</h3><p>${escapeHtml(err.message || 'Unknown error')}</p></div>`;
       detailColEl.innerHTML = '';
+      updatePrintBtnLabel();
     }
   }
 
@@ -484,6 +508,7 @@
     const roach = detail.violations.filter((v) => v.pest_type === 'roach' || v.pest_type === 'both').length;
 
     detailColEl.innerHTML = `
+      <div class="section-label">Lead Detail</div>
       <h1 style="margin-top: 0;">${escapeHtml(detail.address || 'Unknown address')}</h1>
       <p class="lede">
         Building ID ${escapeHtml(detail.buildingid)}
@@ -534,6 +559,7 @@
 
   async function openBuildingDetail(buildingid) {
     detailColEl.innerHTML = `
+      <div class="section-label">Lead Detail</div>
       <div class="state-box">
         <div class="spinner"></div>
         <h3>Loading building detail&hellip;</h3>
@@ -546,6 +572,7 @@
       renderBuildingDetail(detail);
     } catch (err) {
       detailColEl.innerHTML = `
+        <div class="section-label">Lead Detail</div>
         <div class="state-box error">
           <h3>Couldn't load building detail</h3>
           <p>${escapeHtml(err.message || 'Unknown error')}</p>
@@ -557,6 +584,7 @@
     selectedBuildingId = null;
     listFrameEl.querySelectorAll('.lead-row.selected').forEach((row) => row.classList.remove('selected'));
     detailColEl.innerHTML = `
+      <div class="section-label">Lead Detail</div>
       <div class="state-box">
         <div class="spinner"></div>
         <h3>Looking up &ldquo;${escapeHtml(address)}&rdquo;&hellip;</h3>
@@ -579,6 +607,7 @@
         : result.status === 'too_vague' ? 'Need a bit more detail'
         : 'Found the address, but…';
       detailColEl.innerHTML = `
+        <div class="section-label">Lead Detail</div>
         <div class="state-box">
           <h3>${heading}</h3>
           <p>${escapeHtml(result.message)}</p>
@@ -586,6 +615,7 @@
         </div>`;
     } catch (err) {
       detailColEl.innerHTML = `
+        <div class="section-label">Lead Detail</div>
         <div class="state-box error">
           <h3>Couldn't look up that address</h3>
           <p>${escapeHtml(err.message || 'Unknown error')}</p>
@@ -608,7 +638,8 @@
   });
   searchEl.addEventListener('input', clearSearchError);
 
-  load();
+  // No data is fetched until the user actually applies a search/filter —
+  // see the initial state-box markup above instead of an auto-load here.
 </script>
 </body>
 </html>
